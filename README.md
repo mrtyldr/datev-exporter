@@ -278,7 +278,21 @@ try (OutputStream output = Files.newOutputStream(Path.of("EXTF_Buchungsstapel.cs
 }
 ```
 
-`DatevMetadata` fixes the format identifier to external `EXTF`, header version 700, format category 21, `Buchungsstapel`, and format version 13. Its builder validates the timestamp, adviser/client numbers, fiscal year, account length, period and optional metadata fields. The plain builder additionally rejects metadata whose format version differs from the selected schema, so a file cannot declare a version it does not contain.
+`DatevMetadata` fixes the format identifier to external `EXTF`, header version 700, format category 21 and `Buchungsstapel`. Its builder validates the timestamp, adviser/client numbers, fiscal year, account length, period and optional metadata fields.
+
+Use `DatevMetadata.bookingBatchV12()` for the legacy 124-column schema:
+
+```java
+DatevMetadata legacyMetadata = DatevMetadata.bookingBatchV12()
+        // ... the same builder methods
+        .build();
+
+DatevFile legacy = DatevFile.builder(DatevSchema.LEGACY_V12)
+        .metadata(legacyMetadata)
+        .build();
+```
+
+Both exporters reject metadata whose format version differs from the configured schema or header, so a file cannot declare a version it does not contain.
 
 `DatevFile.withDefaults()` remains available for a heading-and-rows-only v13 document. Use the builder when the result must contain the mandatory first record. The advanced exporter accepts the same metadata through `DatevFile.withDefaults(metadata)` and `DatevFile.builder().metadata(metadata)`; there it can only be combined with the exact official header, strict validation and the DATEV Windows-1252 output profile.
 

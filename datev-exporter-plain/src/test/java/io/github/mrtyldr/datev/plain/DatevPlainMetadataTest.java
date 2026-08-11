@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -76,8 +77,60 @@ class DatevPlainMetadataTest {
                 () -> DatevFile.builder(DatevSchema.LEGACY_V12).metadata(metadata()));
         assertThrows(IllegalArgumentException.class,
                 () -> DatevStreamWriter.builder(DatevSchema.LEGACY_V12).metadata(metadata()));
+        assertThrows(IllegalArgumentException.class,
+                () -> DatevFile.builder().metadata(legacyMetadata()));
         assertThrows(NullPointerException.class, () -> DatevFile.builder().metadata(null));
         assertThrows(NullPointerException.class, () -> DatevFile.builder(null));
+    }
+
+    @Test
+    void writesALegacyV12ManagementRecordAlongsideTheLegacySchema() {
+        DatevFile file = DatevFile.builder(DatevSchema.LEGACY_V12)
+                .metadata(legacyMetadata())
+                .build();
+        file.append(DatevRowSamples.requiredFieldsRow());
+
+        List<String> records = List.of(file.toCsvString().split("\r\n"));
+
+        assertTrue(file.isCompleteExtf());
+        assertEquals(12, file.metadata().orElseThrow().formatVersion());
+        assertEquals(legacyMetadata().toCsvLine(), records.get(0));
+        // Field 5 of the management record is the Buchungsstapel format version.
+        assertEquals("12", records.get(0).split(";")[4]);
+        assertEquals(124, records.get(1).split(";", -1).length);
+    }
+
+    @Test
+    void theTwoVersionsProduceDifferentManagementRecords() {
+        assertNotEquals(metadata(), legacyMetadata());
+        assertEquals("13", metadata().toCsvLine().split(";")[4]);
+        assertEquals("12", legacyMetadata().toCsvLine().split(";")[4]);
+    }
+
+    @Test
+    void streamWriterAcceptsLegacyMetadata() {
+        StringWriter output = new StringWriter();
+
+        try (DatevStreamWriter writer = DatevStreamWriter.builder(DatevSchema.LEGACY_V12)
+                .metadata(legacyMetadata())
+                .build(output)) {
+            writer.append(DatevRowSamples.requiredFieldsRow());
+        }
+
+        assertTrue(output.toString().startsWith(legacyMetadata().toCsvLine() + "\r\n"));
+    }
+
+    private static DatevMetadata legacyMetadata() {
+        return DatevMetadata.bookingBatchV12()
+                .createdAt(LocalDateTime.of(2026, 8, 11, 9, 30))
+                .origin("RE")
+                .exportedBy("test")
+                .advisorNumber(1001)
+                .clientNumber(1)
+                .fiscalYearStart(LocalDate.of(2026, 1, 1))
+                .accountLength(4)
+                .period(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31))
+                .build();
     }
 
     @Test
@@ -93,8 +146,8 @@ class DatevPlainMetadataTest {
 
         assertEquals(List.of(13), seen);
         assertTrue(file.validator().isPresent());
-        // DatevMetadata has no equals(), so identity is the only available check here.
         assertSame(metadata, file.metadata().orElseThrow());
+        assertEquals(metadata, file.metadata().orElseThrow());
     }
 
     private static DatevMetadata metadata() {

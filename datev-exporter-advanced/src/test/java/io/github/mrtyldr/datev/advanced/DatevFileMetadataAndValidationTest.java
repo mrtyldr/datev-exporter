@@ -124,6 +124,33 @@ class DatevFileMetadataAndValidationTest {
     }
 
     @Test
+    void legacyMetadataRequiresTheLegacyHeaderAndViceVersa() {
+        DatevMetadata legacy = DatevMetadata.bookingBatchV12()
+                .createdAt(LocalDateTime.of(2026, 8, 11, 9, 30))
+                .origin("RE")
+                .exportedBy("test")
+                .advisorNumber(1001)
+                .clientNumber(1)
+                .fiscalYearStart(LocalDate.of(2026, 1, 1))
+                .accountLength(4)
+                .period(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31))
+                .build();
+
+        DatevFile file = DatevFile.builder(DatevHeader.legacyV12()).metadata(legacy).build();
+
+        assertTrue(file.isCompleteExtf());
+        assertEquals(12, file.metadata().orElseThrow().formatVersion());
+        assertEquals("12", file.toCsvString().split(";")[4]);
+
+        assertThrows(IllegalStateException.class,
+                () -> DatevFile.builder().metadata(legacy).build());
+        assertThrows(IllegalStateException.class,
+                () -> DatevFile.builder(DatevHeader.legacyV12()).metadata(metadata()).build());
+        assertThrows(IllegalStateException.class,
+                () -> DatevFile.builder(DatevHeader.parse("A;B")).metadata(legacy).build());
+    }
+
+    @Test
     void renameAndReorderRetainOfficialFieldSemantics() {
         List<String> reversed = new ArrayList<>(DatevHeader.current().keys());
         java.util.Collections.reverse(reversed);

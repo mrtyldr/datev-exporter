@@ -724,13 +724,16 @@ public final class DatevFile implements Iterable<List<String>> {
          */
         public DatevFile build() {
             if (metadata != null) {
-                if (!DatevHeader.current().equals(header)) {
+                if (!DatevHeader.current().equals(header) && !DatevHeader.legacyV12().equals(header)) {
                     throw new IllegalStateException(
-                            "EXTF metadata requires the exact official Buchungsstapel v13 header."
+                            "EXTF metadata requires an exact official Buchungsstapel header."
                     );
                 }
-                if (metadata.formatVersion() != DatevMetadata.FORMAT_VERSION) {
-                    throw new IllegalStateException("EXTF metadata and header versions must agree.");
+                int headerVersion = header.bookingBatchVersion().orElseThrow();
+                if (metadata.formatVersion() != headerVersion) {
+                    throw new IllegalStateException("EXTF metadata declares format version "
+                            + metadata.formatVersion() + " but the header is version "
+                            + headerVersion + '.');
                 }
                 if (validationMode != DatevValidationMode.STRICT) {
                     throw new IllegalStateException("Complete EXTF output requires STRICT validation.");

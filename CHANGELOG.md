@@ -8,7 +8,20 @@ Until the first `1.0.0` release the public API may change between minor versions
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- `DatevMetadata.bookingBatchV12()`, so the legacy 124-column schema can also carry an EXTF
+  management record. `0.1.0` only offered `bookingBatchV13()`, which made
+  `DatevFile.builder(DatevSchema.LEGACY_V12).metadata(...)` impossible to satisfy: the builder
+  accepted the legacy schema but every metadata instance declared version 13.
+- `DatevMetadata.LEGACY_FORMAT_VERSION`.
+
+### Changed
+
+- `DatevMetadata.formatVersion()` now returns the version the instance was built with instead of
+  the constant 13, and `toCsvLine()` writes that value into field 5 of the management record.
+- The advanced `DatevFile` builder accepts metadata alongside either official header and checks
+  that the two versions agree, instead of requiring version 13.
 
 ## [0.1.0] - 2026-08-11
 

@@ -12,11 +12,12 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
- * Immutable metadata for the first record of a DATEV Buchungsstapel v13 file.
+ * Immutable metadata for the first record of a DATEV Buchungsstapel file.
  *
- * <p>The generated record contains the 31 fields required by DATEV header version 700,
- * format category 21 and format version 13. Fixed and reserved fields cannot be changed. Use
- * {@link #bookingBatchV13()} to configure the business-specific fields.
+ * <p>The generated record contains the 31 fields required by DATEV header version 700 and format
+ * category 21. Fixed and reserved fields cannot be changed. Use {@link #bookingBatchV13()} for the
+ * current format version and {@link #bookingBatchV12()} for the legacy one; the chosen version has
+ * to match the schema the rows are written with.
  */
 public final class DatevMetadata {
 
@@ -31,6 +32,9 @@ public final class DatevMetadata {
 
     /** Current DATEV Buchungsstapel format version. */
     public static final int FORMAT_VERSION = 13;
+
+    /** Legacy DATEV Buchungsstapel format version. */
+    public static final int LEGACY_FORMAT_VERSION = 12;
 
     private static final int FIELD_COUNT = 31;
     private static final DateTimeFormatter TIMESTAMP_FORMATTER =
@@ -54,6 +58,7 @@ public final class DatevMetadata {
             false, true, false, true, false, false, true, false, false, true, true
     };
 
+    private final int formatVersion;
     private final LocalDateTime createdAt;
     private final String origin;
     private final String exportedBy;
@@ -75,6 +80,7 @@ public final class DatevMetadata {
     private final String applicationInformation;
 
     private DatevMetadata(Builder builder) {
+        this.formatVersion = builder.formatVersion;
         this.createdAt = builder.createdAt;
         this.origin = builder.origin;
         this.exportedBy = builder.exportedBy;
@@ -111,7 +117,8 @@ public final class DatevMetadata {
         if (!(other instanceof DatevMetadata metadata)) {
             return false;
         }
-        return advisorNumber == metadata.advisorNumber
+        return formatVersion == metadata.formatVersion
+                && advisorNumber == metadata.advisorNumber
                 && clientNumber == metadata.clientNumber
                 && accountLength == metadata.accountLength
                 && fixed == metadata.fixed
@@ -139,7 +146,7 @@ public final class DatevMetadata {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(createdAt, origin, exportedBy, importedBy, advisorNumber, clientNumber,
+        return Objects.hash(formatVersion, createdAt, origin, exportedBy, importedBy, advisorNumber, clientNumber,
                 fiscalYearStart, accountLength, periodStart, periodEnd, description, dictationCode,
                 bookingType, accountingPurpose, fixed, currency, chartOfAccounts,
                 industrySolutionId, applicationInformation);
@@ -154,19 +161,32 @@ public final class DatevMetadata {
      */
     @Override
     public String toString() {
-        return "DatevMetadata[advisor=" + advisorNumber
+        return "DatevMetadata[v" + formatVersion
+                + ", advisor=" + advisorNumber
                 + ", client=" + clientNumber
                 + ", period=" + periodStart + ".." + periodEnd
                 + ", fixed=" + fixed + ']';
     }
 
     /**
-     * Starts a builder for an external Buchungsstapel v13 export.
+     * Starts a builder for an external Buchungsstapel export in the current format version 13.
      *
      * @return a builder with DATEV's documented defaults
      */
     public static Builder bookingBatchV13() {
-        return new Builder();
+        return new Builder(FORMAT_VERSION);
+    }
+
+    /**
+     * Starts a builder for an external Buchungsstapel export in the legacy format version 12.
+     *
+     * <p>Version 12 omits the last field, {@code Abw. Skontokonto}. Pair this with
+     * {@link DatevSchema#LEGACY_V12} or {@link DatevHeader#legacyV12()}.
+     *
+     * @return a builder with DATEV's documented defaults
+     */
+    public static Builder bookingBatchV12() {
+        return new Builder(LEGACY_FORMAT_VERSION);
     }
 
     /**
@@ -199,10 +219,10 @@ public final class DatevMetadata {
     /**
      * Returns the Buchungsstapel data format version.
      *
-     * @return {@value #FORMAT_VERSION}
+     * @return {@value #FORMAT_VERSION} or {@value #LEGACY_FORMAT_VERSION}
      */
     public int formatVersion() {
-        return FORMAT_VERSION;
+        return formatVersion;
     }
 
     /**
@@ -390,7 +410,7 @@ public final class DatevMetadata {
                 Integer.toString(HEADER_VERSION),
                 Integer.toString(FORMAT_CATEGORY),
                 FORMAT_NAME,
-                Integer.toString(FORMAT_VERSION),
+                Integer.toString(formatVersion),
                 TIMESTAMP_FORMATTER.format(createdAt),
                 "",
                 origin,
@@ -564,6 +584,7 @@ public final class DatevMetadata {
 
     /** Builds immutable Buchungsstapel v13 metadata. */
     public static final class Builder {
+        private final int formatVersion;
         private LocalDateTime createdAt;
         private String origin = "";
         private String exportedBy = "";
@@ -584,7 +605,8 @@ public final class DatevMetadata {
         private String industrySolutionId = "";
         private String applicationInformation = "";
 
-        private Builder() {
+        private Builder(int formatVersion) {
+            this.formatVersion = formatVersion;
         }
 
         /**
