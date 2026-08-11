@@ -1,0 +1,18 @@
+plugins {
+    id 'datev.java-conventions'
+    id 'datev.publish-conventions'
+    id 'java-test-fixtures'
+}
+
+description = 'The shared zero-third-party-dependency DATEV Buchungsstapel schema and validation core.'
+ext.datevModuleName = 'io.github.mrtyldr.datev.core'
+
+// Test fixtures are an internal build-time convenience; they are not part of the published API.
+components.java.withVariantsFromConfiguration(configurations.testFixturesApiElements) { skip() }
+components.java.withVariantsFromConfiguration(configurations.testFixturesRuntimeElements) { skip() }
+
+afterEvaluate {
+    configurations.matching { it.name == 'testFixturesSourcesElements' }.configureEach {
+        components.java.withVariantsFromConfiguration(it) { skip() }
+    }
+}

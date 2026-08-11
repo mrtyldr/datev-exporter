@@ -1,0 +1,53 @@
+.gradle/
+build/
+out/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Visual Studio Code
+.vscode/
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# Local agent and assistant configuration
+.codex/
+.claude/
+.aider*
+
+# Local-only working notes; not part of the published project
+docs/
+
+# Credentials and local build overrides; never commit these
+gradle.properties
+local.properties
+*.gpg
+*.asc
+secring.*
+
+# Scratch files
+.writetest
+*.log
+*.tmp

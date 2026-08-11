@@ -1,0 +1,16 @@
+plugins {
+    id 'datev.java-conventions'
+    id 'datev.publish-conventions'
+}
+
+description = 'An optional implementation-neutral DATEV Buchungsstapel semantic validator.'
+ext.datevModuleName = 'io.github.mrtyldr.datev.validation'
+
+dependencies {
+    testImplementation testFixtures(project(':datev-exporter-core'))
+
+    api project(':datev-exporter-core')
+
+    testImplementation project(':datev-exporter-plain')
+    testImplementation project(':datev-exporter-univocity')
+}

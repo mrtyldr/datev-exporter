@@ -1,0 +1,56 @@
+plugins {
+    id 'com.vanniktech.maven.publish'
+}
+
+group = 'io.github.mrtyldr'
+version = providers.gradleProperty('releaseVersion').getOrElse('0.2.0-SNAPSHOT')
+
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates(group.toString(), project.name, version.toString())
+
+    pom {
+        name = project.name
+        inceptionYear = '2026'
+        url = 'https://github.com/mrtyldr/datev-exporter'
+
+        licenses {
+            license {
+                name = 'The Apache License, Version 2.0'
+                url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution = 'repo'
+            }
+        }
+
+        developers {
+            developer {
+                id = 'mrtyldr'
+                name = 'Murat Yildirim'
+                url = 'https://github.com/mrtyldr'
+            }
+        }
+
+        scm {
+            connection = 'scm:git:https://github.com/mrtyldr/datev-exporter.git'
+            developerConnection = 'scm:git:ssh://git@github.com/mrtyldr/datev-exporter.git'
+            url = 'https://github.com/mrtyldr/datev-exporter'
+        }
+
+        issueManagement {
+            system = 'GitHub Issues'
+            url = 'https://github.com/mrtyldr/datev-exporter/issues'
+        }
+    }
+}
+
+// `description` is declared by each module after this plugin is applied, so the
+// POM description has to be wired up once the project is fully evaluated.
+afterEvaluate {
+    mavenPublishing {
+        pom {
+            description = project.description
+        }
+    }
+}

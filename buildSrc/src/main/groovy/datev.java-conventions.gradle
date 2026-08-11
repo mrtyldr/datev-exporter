@@ -1,0 +1,58 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'io.github.mrtyldr'
+version = providers.gradleProperty('releaseVersion').getOrElse('0.2.0-SNAPSHOT')
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.0.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+}
+
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) {
+        into 'META-INF'
+    }
+    // Byte-identical jars for the same sources, independent of checkout time.
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+// Reserves the JPMS module name for consumers on the module path. Each published module sets
+// `datevModuleName` after this plugin is applied, so the manifest can only be wired up once the
+// project is fully evaluated. Renaming this after a release is a breaking change.
+afterEvaluate {
+    def datevModuleName = project.findProperty('datevModuleName')
+    if (datevModuleName) {
+        tasks.named('jar', Jar) {
+            manifest.attributes('Automatic-Module-Name': datevModuleName)
+        }
+    }
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

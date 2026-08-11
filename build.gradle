@@ -1,0 +1,16 @@
+plugins {
+    id 'java-platform'
+    id 'datev.publish-conventions'
+}
+
+description = 'A Bill of Materials aligning every datev-exporter module on one version.'
+
+dependencies {
+    constraints {
+        api project(':datev-exporter-core')
+        api project(':datev-exporter-plain')
+        api project(':datev-exporter-univocity')
+        api project(':datev-exporter-field-validator')
+        api project(':datev-exporter-advanced')
+    }
+}

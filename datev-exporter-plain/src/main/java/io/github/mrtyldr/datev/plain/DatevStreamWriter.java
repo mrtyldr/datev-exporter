@@ -1,0 +1,493 @@
+package io.github.mrtyldr.datev.plain;
+
+import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevSchema;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+
+/**
+ * Writes a fixed DATEV column-heading record and booking rows without retaining completed rows.
+ *
+ * <p>This lean writer never emits the mandatory EXTF management record. Use the advanced
+ * {@code datev-exporter} artifact when a complete Buchungsstapel file is required.
+ *
+ * <p>Each append is fully aligned, formatted, structurally checked, optionally validated and
+ * serialized in row-local memory before output begins. Successfully written rows are discarded, so
+ * library-managed working memory is proportional to the largest row instead of the total row count.
+ * The supplied output remains caller-owned: during normal completion {@link #close()} flushes it
+ * but does not close it. After a destination failure, close does not retry a flush. Byte-stream
+ * factories emit Windows-1252 directly; callers supplying a character {@link Writer} remain
+ * responsible for its eventual byte encoding.
+ *
+ * <p>Validation and formatting failures leave the output unchanged and the writer reusable. An I/O
+ * failure can occur after a destination has accepted part of a record, so physical rollback cannot
+ * be guaranteed; the writer becomes terminal after any destination failure. Instances are mutable,
+ * forward-only and not thread-safe.
+ */
+public final class DatevStreamWriter implements AutoCloseable {
+
+    private final DatevSchema schema;
+    private final DatevRowAssembler rowAssembler;
+    private final RowSink sink;
+    private State state = State.OPEN;
+    private Throwable failure;
+    private int rowCount;
+
+    private DatevStreamWriter(
+            DatevSchema schema,
+            RowSink sink,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        this.schema = Objects.requireNonNull(schema, "schema");
+        this.sink = Objects.requireNonNull(sink, "sink");
+        this.rowAssembler = new DatevRowAssembler(schema, validator);
+        writeHeader();
+    }
+
+    /**
+     * Starts an unvalidated current-v13 writer on a caller-owned byte stream.
+     *
+     * @param output destination receiving strict Windows-1252 bytes
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter withDefaults(OutputStream output) {
+        return forSchema(DatevSchema.CURRENT_V13, output);
+    }
+
+    /**
+     * Starts a validated current-v13 writer on a caller-owned byte stream.
+     *
+     * @param output destination receiving strict Windows-1252 bytes
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter withDefaults(
+            OutputStream output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return forSchema(DatevSchema.CURRENT_V13, output, validator);
+    }
+
+    /**
+     * Starts an unvalidated current-v13 writer on a caller-owned character writer.
+     *
+     * @param output destination character writer
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter withDefaults(Writer output) {
+        return forSchema(DatevSchema.CURRENT_V13, output);
+    }
+
+    /**
+     * Starts a validated current-v13 writer on a caller-owned character writer.
+     *
+     * @param output destination character writer
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter withDefaults(
+            Writer output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return forSchema(DatevSchema.CURRENT_V13, output, validator);
+    }
+
+    /**
+     * Starts an unvalidated legacy-v12 writer on a caller-owned byte stream.
+     *
+     * @param output destination receiving strict Windows-1252 bytes
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter legacyV12(OutputStream output) {
+        return forSchema(DatevSchema.LEGACY_V12, output);
+    }
+
+    /**
+     * Starts a validated legacy-v12 writer on a caller-owned byte stream.
+     *
+     * @param output destination receiving strict Windows-1252 bytes
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter legacyV12(
+            OutputStream output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return forSchema(DatevSchema.LEGACY_V12, output, validator);
+    }
+
+    /**
+     * Starts an unvalidated legacy-v12 writer on a caller-owned character writer.
+     *
+     * @param output destination character writer
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter legacyV12(Writer output) {
+        return forSchema(DatevSchema.LEGACY_V12, output);
+    }
+
+    /**
+     * Starts a validated legacy-v12 writer on a caller-owned character writer.
+     *
+     * @param output destination character writer
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter legacyV12(
+            Writer output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return forSchema(DatevSchema.LEGACY_V12, output, validator);
+    }
+
+    /**
+     * Starts an unvalidated writer for one fixed schema on a caller-owned byte stream.
+     *
+     * @param schema fixed DATEV schema
+     * @param output destination receiving strict Windows-1252 bytes
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter forSchema(DatevSchema schema, OutputStream output) {
+        return new DatevStreamWriter(schema, byteSink(output), null);
+    }
+
+    /**
+     * Starts a validated writer for one fixed schema on a caller-owned byte stream.
+     *
+     * @param schema fixed DATEV schema
+     * @param output destination receiving strict Windows-1252 bytes
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter forSchema(
+            DatevSchema schema,
+            OutputStream output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return new DatevStreamWriter(
+                schema,
+                byteSink(output),
+                Objects.requireNonNull(validator, "validator")
+        );
+    }
+
+    /**
+     * Starts an unvalidated writer for one fixed schema on a caller-owned character writer.
+     *
+     * @param schema fixed DATEV schema
+     * @param output destination character writer
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter forSchema(DatevSchema schema, Writer output) {
+        return new DatevStreamWriter(schema, characterSink(output), null);
+    }
+
+    /**
+     * Starts a validated writer for one fixed schema on a caller-owned character writer.
+     *
+     * @param schema fixed DATEV schema
+     * @param output destination character writer
+     * @param validator validator invoked before each row write
+     * @return a new forward-only writer whose column heading has been written
+     */
+    public static DatevStreamWriter forSchema(
+            DatevSchema schema,
+            Writer output,
+            BiConsumer<Integer, List<String>> validator
+    ) {
+        return new DatevStreamWriter(
+                schema,
+                characterSink(output),
+                Objects.requireNonNull(validator, "validator")
+        );
+    }
+
+    /**
+     * Returns the fixed schema selected for this output.
+     *
+     * @return selected v12 or v13 schema
+     */
+    public DatevSchema schema() {
+        return schema;
+    }
+
+    /**
+     * Returns the immutable official headings in output order.
+     *
+     * @return fixed ordered headings
+     */
+    public List<String> headers() {
+        return schema.headers();
+    }
+
+    /**
+     * Returns the byte-output charset.
+     *
+     * @return Windows-1252
+     */
+    public Charset charset() {
+        return DatevFile.DEFAULT_CHARSET;
+    }
+
+    /**
+     * Returns the configured optional validator.
+     *
+     * @return configured format-version/row consumer, if any
+     */
+    public Optional<BiConsumer<Integer, List<String>>> validator() {
+        return Optional.ofNullable(rowAssembler.validator());
+    }
+
+    /**
+     * Returns the number of booking rows successfully handed to the destination.
+     *
+     * @return committed row count, excluding the heading
+     */
+    public int rowCount() {
+        return rowCount;
+    }
+
+    /**
+     * Returns whether no booking row has been successfully written.
+     *
+     * @return {@code true} until the first successful row write
+     */
+    public boolean isEmpty() {
+        return rowCount == 0;
+    }
+
+    /**
+     * Parses and writes exactly one strict semicolon-delimited CSV record.
+     *
+     * @param semicolonSeparatedRow exactly one complete CSV row
+     */
+    public void append(String semicolonSeparatedRow) {
+        appendPrepared(() -> rowAssembler.fromCsv(semicolonSeparatedRow));
+    }
+
+    /**
+     * Writes a complete positional row from a defensively copied array.
+     *
+     * @param orderedValues values in fixed heading order
+     */
+    public void append(String[] orderedValues) {
+        appendPrepared(() -> rowAssembler.fromArray(orderedValues));
+    }
+
+    /**
+     * Writes a complete positional row from a defensively copied collection.
+     *
+     * @param orderedValues values in fixed heading order
+     */
+    public void append(Collection<String> orderedValues) {
+        appendPrepared(() -> rowAssembler.fromCollection(orderedValues));
+    }
+
+    /**
+     * Writes a complete positional row after converting non-null values with
+     * {@link String#valueOf(Object)}.
+     *
+     * @param orderedValues values in fixed heading order
+     */
+    public void appendValues(Object... orderedValues) {
+        appendPrepared(() -> rowAssembler.fromValues(orderedValues));
+    }
+
+    /**
+     * Writes a sparse row addressed by exact official heading names.
+     *
+     * @param valuesByHeader values addressed by exact official headings
+     */
+    public void append(Map<String, ?> valuesByHeader) {
+        appendPrepared(() -> rowAssembler.fromMap(valuesByHeader));
+    }
+
+    /**
+     * Writes a sparse formatted row addressed by exact official heading names.
+     *
+     * @param columns columns to align by heading
+     */
+    public void append(DatevColumn<?>... columns) {
+        appendPrepared(() -> {
+            Objects.requireNonNull(columns, "columns");
+            return rowAssembler.fromColumns(Arrays.asList(columns.clone()));
+        });
+    }
+
+    /**
+     * Writes formatted columns from an iterable.
+     *
+     * @param columns columns to align by heading
+     */
+    public void append(Iterable<? extends DatevColumn<?>> columns) {
+        appendPrepared(() -> {
+            Objects.requireNonNull(columns, "columns");
+            List<DatevColumn<?>> snapshot = new ArrayList<>();
+            for (DatevColumn<?> column : columns) {
+                snapshot.add(column);
+            }
+            return rowAssembler.fromColumns(snapshot);
+        });
+    }
+
+    /**
+     * Writes a sparse formatted row from a collection.
+     *
+     * @param columns columns to align by heading
+     */
+    public void appendColumns(Collection<? extends DatevColumn<?>> columns) {
+        appendPrepared(() -> rowAssembler.fromColumns(columns));
+    }
+
+    /** Flushes completed records without closing the caller-owned destination. */
+    public void flush() {
+        ensureOpen("flush");
+        try {
+            sink.flush();
+        } catch (IOException exception) {
+            UncheckedIOException wrapped = new UncheckedIOException(
+                    "Could not flush DATEV CSV output.",
+                    exception
+            );
+            fail(wrapped);
+            throw wrapped;
+        } catch (RuntimeException | Error exception) {
+            fail(exception);
+            throw exception;
+        }
+    }
+
+    /**
+     * Flushes completed records and makes this writer terminal without closing the destination.
+     * Repeated calls have no effect. If a previous destination operation failed, this method does
+     * not retry flushing potentially partial output.
+     */
+    @Override
+    public void close() {
+        if (state == State.CLOSED || state == State.FAILED) {
+            return;
+        }
+        ensureOpen("close");
+        flush();
+        state = State.CLOSED;
+    }
+
+    private void appendPrepared(RowSupplier supplier) {
+        ensureOpen("append");
+        DatevFile.ensureCanAppendRow(rowCount);
+        state = State.APPENDING;
+        boolean sinkTouched = false;
+        try {
+            List<String> row = supplier.get();
+            String record = DatevCsvEncoder.encodeRow(schema, row);
+            sinkTouched = true;
+            sink.write(record);
+            rowCount++;
+            state = State.OPEN;
+        } catch (IOException exception) {
+            UncheckedIOException wrapped = new UncheckedIOException(
+                    "Could not write DATEV CSV row.",
+                    exception
+            );
+            fail(wrapped);
+            throw wrapped;
+        } catch (RuntimeException | Error exception) {
+            if (sinkTouched) {
+                fail(exception);
+            } else {
+                state = State.OPEN;
+            }
+            throw exception;
+        }
+    }
+
+    private void writeHeader() {
+        try {
+            sink.write(DatevCsvEncoder.encodeHeader(schema));
+        } catch (IOException exception) {
+            throw new UncheckedIOException("Could not write DATEV CSV heading.", exception);
+        }
+    }
+
+    private void ensureOpen(String operation) {
+        if (state == State.OPEN) {
+            return;
+        }
+        String message = switch (state) {
+            case APPENDING -> "Cannot " + operation + " reentrantly while a row is being appended.";
+            case FAILED -> "Cannot " + operation + " after a DATEV output failure.";
+            case CLOSED -> "Cannot " + operation + " after the DATEV stream writer was closed.";
+            case OPEN -> throw new AssertionError("Unexpected open state.");
+        };
+        IllegalStateException exception = new IllegalStateException(message);
+        if (failure != null) {
+            exception.initCause(failure);
+        }
+        throw exception;
+    }
+
+    private void fail(Throwable cause) {
+        failure = cause;
+        state = State.FAILED;
+    }
+
+    private static RowSink byteSink(OutputStream output) {
+        OutputStream destination = Objects.requireNonNull(output, "output");
+        return new RowSink() {
+            @Override
+            public void write(String value) throws IOException {
+                destination.write(value.getBytes(DatevFile.DEFAULT_CHARSET));
+            }
+
+            @Override
+            public void flush() throws IOException {
+                destination.flush();
+            }
+        };
+    }
+
+    private static RowSink characterSink(Writer output) {
+        Writer destination = Objects.requireNonNull(output, "output");
+        return new RowSink() {
+            @Override
+            public void write(String value) throws IOException {
+                destination.write(value);
+            }
+
+            @Override
+            public void flush() throws IOException {
+                destination.flush();
+            }
+        };
+    }
+
+    private enum State {
+        OPEN,
+        APPENDING,
+        FAILED,
+        CLOSED
+    }
+
+    @FunctionalInterface
+    private interface RowSupplier {
+        List<String> get();
+    }
+
+    private interface RowSink {
+        void write(String value) throws IOException;
+
+        void flush() throws IOException;
+    }
+}

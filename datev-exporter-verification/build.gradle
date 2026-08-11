@@ -1,0 +1,233 @@
+// Not published. Hosts the opt-in verification against DATEV's official
+// Format-Pruefprogramm: the download/pin tasks, the deterministic fixture
+// generator and the schema compatibility test.
+plugins {
+    id 'datev.java-conventions'
+}
+
+description = 'Internal verification against the pinned official DATEV checker.'
+
+sourceSets {
+    datevCheckerTest {
+        java.srcDir 'src/datevCheckerTest/java'
+        resources.srcDir 'src/datevCheckerTest/resources'
+    }
+}
+
+configurations {
+    datevCheckerTestImplementation.extendsFrom testImplementation
+    datevCheckerTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    testImplementation testFixtures(project(':datev-exporter-core'))
+
+    testImplementation project(':datev-exporter-plain')
+    testImplementation project(':datev-exporter-univocity')
+    testImplementation project(':datev-exporter-advanced')
+    testImplementation project(':datev-exporter-field-validator')
+}
+
+def datevCheckerVersion = '2.2.3.0'
+def datevCheckerUrl = 'https://developer.datev.de/assets/Datev_Format_Pruefprogramm_2_2_3_0_76439824cb.zip'
+def datevCheckerSha256 = '216f2028bfb35b4d3abcde9b4a9ab12873ceff9b9c88ca94294e45a5c056a6dc'
+def datevSamplesUrl = 'https://developer.datev.de/assets/Musterdaten_DATEV_Format_0_7f9322b9cc.zip'
+def datevSamplesSha256 = '03925e0b88f705205ac3d531c07c068759edd666c0291dcefcc177193ba6cd41'
+def datevCheckerDirectory = layout.buildDirectory.dir("datev-checker/${datevCheckerVersion}")
+def datevCheckerArchive = datevCheckerDirectory.map { it.file('datev-checker.zip') }
+def datevCheckerExtracted = datevCheckerDirectory.map { it.dir('extracted') }
+def datevCheckerSchema = datevCheckerExtracted.map {
+    it.file('DatevFormatPruefprogramm/Formate/Format_Buchungsstapel.xml')
+}
+def datevCheckerExecutable = datevCheckerExtracted.map {
+    it.file('DatevFormatPruefprogramm/DatevFormatPruefProgramm.exe')
+}
+def datevCheckerFixture = layout.buildDirectory.file(
+        'datev-checker/fixture/EXTF_Buchungsstapel.csv'
+)
+def datevSamplesArchive = layout.buildDirectory.file('datev-checker/samples/datev-samples.zip')
+def datevBookingSample = layout.buildDirectory.file(
+        'datev-checker/samples/extracted/EXTF_Buchungsstapel.csv'
+)
+
+tasks.register('downloadDatevChecker') {
+    group = 'verification'
+    description = 'Downloads and verifies the pinned official DATEV checker (network, opt-in).'
+
+    inputs.property('checkerVersion', datevCheckerVersion)
+    inputs.property('checkerUrl', datevCheckerUrl)
+    inputs.property('checkerSha256', datevCheckerSha256)
+    outputs.file(datevCheckerArchive)
+    outputs.file(datevCheckerSchema)
+    outputs.file(datevCheckerExecutable)
+
+    doLast {
+        def destination = datevCheckerDirectory.get().asFile
+        def archive = datevCheckerArchive.get().asFile
+        def extracted = datevCheckerExtracted.get().asFile
+        destination.mkdirs()
+
+        def connection = new URI(datevCheckerUrl).toURL().openConnection()
+        connection.connectTimeout = 30_000
+        connection.readTimeout = 30_000
+        connection.getInputStream().withCloseable { input ->
+            archive.withOutputStream { output ->
+                output << input
+            }
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        archive.withInputStream { input ->
+            byte[] buffer = new byte[8192]
+            int read
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        def actualSha256 = java.util.HexFormat.of().formatHex(digest.digest())
+        if (actualSha256 != datevCheckerSha256) {
+            archive.delete()
+            throw new GradleException(
+                    "DATEV checker checksum mismatch: expected ${datevCheckerSha256}, got ${actualSha256}"
+            )
+        }
+
+        def extractedPath = extracted.toPath().toAbsolutePath().normalize()
+        if (java.nio.file.Files.exists(extractedPath)) {
+            java.nio.file.Files.walk(extractedPath).withCloseable { paths ->
+                paths.sorted(java.util.Comparator.reverseOrder()).forEach {
+                    java.nio.file.Files.delete(it)
+                }
+            }
+        }
+        java.nio.file.Files.createDirectories(extractedPath)
+        archive.withInputStream { archiveInput ->
+            new java.util.zip.ZipInputStream(archiveInput).withCloseable { zipInput ->
+                java.util.zip.ZipEntry entry
+                while ((entry = zipInput.nextEntry) != null) {
+                    def entryPath = extractedPath.resolve(entry.name).normalize()
+                    if (!entryPath.startsWith(extractedPath)) {
+                        throw new GradleException("Unsafe path in DATEV checker archive: ${entry.name}")
+                    }
+                    if (entry.directory) {
+                        java.nio.file.Files.createDirectories(entryPath)
+                    } else {
+                        java.nio.file.Files.createDirectories(entryPath.parent)
+                        java.nio.file.Files.copy(
+                                zipInput,
+                                entryPath,
+                                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                        )
+                    }
+                    zipInput.closeEntry()
+                }
+            }
+        }
+
+        if (!datevCheckerSchema.get().asFile.isFile()
+                || !datevCheckerExecutable.get().asFile.isFile()) {
+            throw new GradleException('The verified DATEV checker archive has an unexpected layout.')
+        }
+    }
+}
+
+tasks.register('generateDatevCheckerFixture', JavaExec) {
+    group = 'verification'
+    description = 'Generates a deterministic complete EXTF_Buchungsstapel.csv fixture.'
+    dependsOn tasks.named('datevCheckerTestClasses')
+    classpath = sourceSets.datevCheckerTest.runtimeClasspath
+    mainClass = 'io.github.mrtyldr.datev.advanced.DatevCheckerFixtureGenerator'
+    args datevCheckerFixture.get().asFile.absolutePath
+    outputs.file(datevCheckerFixture)
+}
+
+tasks.register('downloadDatevSamples') {
+    group = 'verification'
+    description = 'Downloads and verifies DATEV\'s pinned official sample files (network, opt-in).'
+
+    inputs.property('samplesUrl', datevSamplesUrl)
+    inputs.property('samplesSha256', datevSamplesSha256)
+    outputs.file(datevSamplesArchive)
+    outputs.file(datevBookingSample)
+
+    doLast {
+        def archive = datevSamplesArchive.get().asFile
+        archive.parentFile.mkdirs()
+        def connection = new URI(datevSamplesUrl).toURL().openConnection()
+        connection.connectTimeout = 30_000
+        connection.readTimeout = 30_000
+        connection.getInputStream().withCloseable { input ->
+            archive.withOutputStream { output ->
+                output << input
+            }
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        archive.withInputStream { input ->
+            byte[] buffer = new byte[8192]
+            int read
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        def actualSha256 = java.util.HexFormat.of().formatHex(digest.digest())
+        if (actualSha256 != datevSamplesSha256) {
+            archive.delete()
+            throw new GradleException(
+                    "DATEV samples checksum mismatch: expected ${datevSamplesSha256}, got ${actualSha256}"
+            )
+        }
+
+        def samplePath = datevBookingSample.get().asFile.toPath().toAbsolutePath().normalize()
+        java.nio.file.Files.createDirectories(samplePath.parent)
+        java.nio.file.Files.deleteIfExists(samplePath)
+        archive.withInputStream { archiveInput ->
+            new java.util.zip.ZipInputStream(archiveInput).withCloseable { zipInput ->
+                java.util.zip.ZipEntry entry
+                while ((entry = zipInput.nextEntry) != null) {
+                    if (!entry.directory && entry.name == 'EXTF_Buchungsstapel.csv') {
+                        java.nio.file.Files.copy(
+                                zipInput,
+                                samplePath,
+                                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                        )
+                    }
+                    zipInput.closeEntry()
+                }
+            }
+        }
+        if (!java.nio.file.Files.isRegularFile(samplePath)) {
+            throw new GradleException('The verified DATEV samples archive has an unexpected layout.')
+        }
+    }
+}
+
+tasks.register('datevCheckerTest', Test) {
+    group = 'verification'
+    description = 'Checks the library and fixture against the pinned official DATEV checker schema.'
+    dependsOn tasks.named('downloadDatevChecker'), tasks.named('downloadDatevSamples'),
+            tasks.named('generateDatevCheckerFixture')
+    testClassesDirs = sourceSets.datevCheckerTest.output.classesDirs
+    classpath = sourceSets.datevCheckerTest.runtimeClasspath
+    systemProperty 'datev.checker.schema', datevCheckerSchema.get().asFile.absolutePath
+    systemProperty 'datev.checker.fixture', datevCheckerFixture.get().asFile.absolutePath
+    systemProperty 'datev.official.bookingSample', datevBookingSample.get().asFile.absolutePath
+    shouldRunAfter tasks.named('test')
+}
+
+tasks.register('runDatevChecker', Exec) {
+    group = 'verification'
+    description = 'Opens the generated fixture in the official DATEV checker GUI on Windows.'
+    dependsOn tasks.named('generateDatevCheckerFixture')
+
+    doFirst {
+        if (!System.getProperty('os.name').toLowerCase(java.util.Locale.ROOT).contains('windows')) {
+            throw new GradleException(
+                    'runDatevChecker requires interactive Windows. Use scripts/run-datev-checker.ps1 there.'
+            )
+        }
+        commandLine 'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+                '-File', rootProject.file('scripts/run-datev-checker.ps1').absolutePath,
+                '-Fixture', datevCheckerFixture.get().asFile.absolutePath
+    }
+}

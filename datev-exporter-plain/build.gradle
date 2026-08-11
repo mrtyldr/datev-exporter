@@ -1,0 +1,13 @@
+plugins {
+    id 'datev.java-conventions'
+    id 'datev.publish-conventions'
+}
+
+description = 'A Java library with no third-party dependencies for writing fixed DATEV column headings and booking rows.'
+ext.datevModuleName = 'io.github.mrtyldr.datev.plain'
+
+dependencies {
+    testImplementation testFixtures(project(':datev-exporter-core'))
+
+    api project(':datev-exporter-core')
+}
