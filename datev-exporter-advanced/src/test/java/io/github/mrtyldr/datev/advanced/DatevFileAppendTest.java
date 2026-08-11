@@ -1,5 +1,6 @@
 package io.github.mrtyldr.datev.advanced;
 
+import io.github.mrtyldr.datev.core.DatevHeader;
 import io.github.mrtyldr.datev.core.DatevColumn;
 
 import org.junit.jupiter.api.Test;

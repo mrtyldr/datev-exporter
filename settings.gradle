@@ -2,7 +2,7 @@ rootProject.name = 'datev-exporter'
 
 include 'datev-exporter-core'
 include 'datev-exporter-plain'
-include 'datev-exporter-univocity'
 include 'datev-exporter-field-validator'
 include 'datev-exporter-advanced'
+include 'datev-exporter-advanced-univocity'
 include 'datev-exporter-verification'

@@ -1,11 +1,5 @@
-package io.github.mrtyldr.datev.advanced;
+package io.github.mrtyldr.datev.core;
 
-import io.github.mrtyldr.datev.core.DatevFieldSpecs;
-import io.github.mrtyldr.datev.core.DatevRowValidation;
-import io.github.mrtyldr.datev.core.DatevValidationContext;
-import io.github.mrtyldr.datev.core.DatevValidationError;
-import io.github.mrtyldr.datev.core.DatevValidationException;
-import io.github.mrtyldr.datev.core.DatevValidationMode;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,14 +7,14 @@ import java.util.Objects;
 /**
  * Validates logical, unquoted DATEV row values against the official Buchungsstapel schema.
  *
- * <p>This class is a thin adapter over the shared validation core in
- * {@code datev-exporter-core}. It adds the advanced exporter's schema identity handling
- * ({@link DatevHeader}) and translates {@link DatevMetadata} into the core's validation context.
+ * <p>This class is a thin adapter over {@link DatevRowValidation}. It adds schema identity
+ * handling for a {@link DatevHeader} and translates {@link DatevMetadata} into a
+ * {@link DatevValidationContext}.
  *
  * <p>CSV delimiters, quotes, and escaping are deliberately outside this class. Values are
- * validated after a {@code DatevColumn} formatter has run and before a row is committed to a
- * {@link DatevFile}. Rules are located through stable canonical keys, so renaming or reordering an
- * official {@link DatevHeader} does not detach its field semantics.
+ * validated after a {@link DatevColumn} formatter has run and before a row is committed to a file.
+ * Rules are located through stable canonical keys, so renaming or reordering an official
+ * {@link DatevHeader} does not detach its field semantics.
  *
  * @see <a href="https://developer.datev.de/de/file-format/details/datev-format/format-description/booking-batch">
  *     Official Buchungsstapel field description</a>

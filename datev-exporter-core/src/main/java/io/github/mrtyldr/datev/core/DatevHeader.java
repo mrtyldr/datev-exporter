@@ -1,6 +1,5 @@
-package io.github.mrtyldr.datev.advanced;
+package io.github.mrtyldr.datev.core;
 
-import io.github.mrtyldr.datev.core.DatevFieldSpecs;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -11,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 
 /**
@@ -284,6 +284,31 @@ public final class DatevHeader {
         return columns.size();
     }
 
+    /**
+     * Resolves a column by its canonical key or its current output name.
+     *
+     * @param identifier the canonical key or the output name
+     * @return the zero-based column index
+     * @throws IllegalArgumentException if the identifier is unknown or ambiguous
+     */
+    public int indexOf(String identifier) {
+        return resolve(identifier);
+    }
+
+    /**
+     * Returns the official Buchungsstapel format version this header is derived from.
+     *
+     * <p>A custom header has no official version, so DATEV's row limit and semantic rules do not
+     * apply to it.
+     *
+     * @return 12 or 13, or an empty optional for a custom header
+     */
+    public OptionalInt bookingBatchVersion() {
+        return bookingBatchFormatVersion == null
+                ? OptionalInt.empty()
+                : OptionalInt.of(bookingBatchFormatVersion);
+    }
+
     int resolve(String identifier) {
         String normalizedIdentifier = validateAndNormalizeName(identifier, "Header identifier");
         Integer keyIndex = keyIndexes.get(normalizedIdentifier);
@@ -298,18 +323,37 @@ public final class DatevHeader {
         return resolved;
     }
 
-    String[] namesArray() {
-        return names.toArray(String[]::new);
+    /**
+     * Returns whether DATEV defines the column as a text field.
+     *
+     * <p>Text fields are always quoted on output, including empty values. A custom header defines
+     * no text fields and relies on generic CSV quoting.
+     *
+     * @param zeroBasedIndex the column index
+     * @return {@code true} for a DATEV text field
+     * @throws IndexOutOfBoundsException if the index does not exist in this header
+     */
+    public boolean isQuotedColumn(int zeroBasedIndex) {
+        if (zeroBasedIndex < 0 || zeroBasedIndex >= columns.size()) {
+            throw new IndexOutOfBoundsException(
+                    "Column index " + zeroBasedIndex + " is outside this header.");
+        }
+        return columns.get(zeroBasedIndex).quoteValue();
     }
 
-    Integer[] quotedIndexes() {
+    /**
+     * Returns the zero-based indexes of the columns that are always quoted.
+     *
+     * @return a new immutable list of quoted column indexes, in ascending order
+     */
+    public List<Integer> quotedColumnIndexes() {
         var indexes = new ArrayList<Integer>();
         for (int index = 0; index < columns.size(); index++) {
             if (columns.get(index).quoteValue()) {
                 indexes.add(index);
             }
         }
-        return indexes.toArray(Integer[]::new);
+        return List.copyOf(indexes);
     }
 
     Integer bookingBatchFormatVersion() {

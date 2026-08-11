@@ -1,5 +1,6 @@
 package io.github.mrtyldr.datev.advanced;
 
+import io.github.mrtyldr.datev.core.DatevMetadata;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;

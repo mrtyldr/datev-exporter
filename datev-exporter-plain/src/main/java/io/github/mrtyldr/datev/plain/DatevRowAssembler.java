@@ -1,6 +1,7 @@
 package io.github.mrtyldr.datev.plain;
 
 import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevCsv;
 import io.github.mrtyldr.datev.core.DatevSchema;
 
 import java.nio.charset.CharsetEncoder;
@@ -40,8 +41,8 @@ final class DatevRowAssembler {
 
     List<String> fromCsv(String semicolonSeparatedRow) {
         Objects.requireNonNull(semicolonSeparatedRow, "semicolonSeparatedRow");
-        rejectControlCharacters(semicolonSeparatedRow, "CSV row");
-        return fromOrdered(parseCsvRow(semicolonSeparatedRow));
+        DatevCsv.rejectControlCharacters(semicolonSeparatedRow, "CSV row");
+        return fromOrdered(DatevCsv.parseRecord(semicolonSeparatedRow));
     }
 
     List<String> fromArray(String[] orderedValues) {
@@ -160,7 +161,7 @@ final class DatevRowAssembler {
 
     private String validateCell(String value, String headerIdentifier) {
         if (value != null) {
-            rejectControlCharacters(value, "value for DATEV header '" + headerIdentifier + "'");
+            DatevCsv.rejectControlCharacters(value, "value for DATEV header '" + headerIdentifier + "'");
             if (!cellEncoder.canEncode(value)) {
                 throw new IllegalArgumentException(
                         "Value for DATEV header '" + headerIdentifier
@@ -188,86 +189,6 @@ final class DatevRowAssembler {
         return Collections.unmodifiableList(copy);
     }
 
-    private static void rejectControlCharacters(String value, String description) {
-        for (int offset = 0; offset < value.length(); ) {
-            int codePoint = value.codePointAt(offset);
-            int type = Character.getType(codePoint);
-            if (Character.isISOControl(codePoint)
-                    || type == Character.LINE_SEPARATOR
-                    || type == Character.PARAGRAPH_SEPARATOR) {
-                throw new IllegalArgumentException(
-                        description + " must not contain control or line-separator characters."
-                );
-            }
-            offset += Character.charCount(codePoint);
-        }
-    }
 
-    private static List<String> parseCsvRow(String input) {
-        List<String> values = new ArrayList<>();
-        StringBuilder value = new StringBuilder();
-        boolean fieldStart = true;
-        boolean quoted = false;
-        boolean quoteClosed = false;
 
-        for (int index = 0; index < input.length(); index++) {
-            char character = input.charAt(index);
-
-            if (quoted) {
-                if (character == '"') {
-                    if (index + 1 < input.length() && input.charAt(index + 1) == '"') {
-                        value.append('"');
-                        index++;
-                    } else {
-                        quoted = false;
-                        quoteClosed = true;
-                    }
-                } else {
-                    value.append(character);
-                }
-                continue;
-            }
-
-            if (quoteClosed) {
-                if (character != DatevFile.DEFAULT_DELIMITER) {
-                    throw malformedCsvRow("Only a delimiter may follow a closing quote", index);
-                }
-                values.add(value.toString());
-                value.setLength(0);
-                fieldStart = true;
-                quoteClosed = false;
-                continue;
-            }
-
-            if (character == DatevFile.DEFAULT_DELIMITER) {
-                values.add(value.toString());
-                value.setLength(0);
-                fieldStart = true;
-            } else if (character == '"') {
-                if (!fieldStart) {
-                    throw malformedCsvRow(
-                            "A quoted value must start at the beginning of a field",
-                            index
-                    );
-                }
-                quoted = true;
-                fieldStart = false;
-            } else {
-                value.append(character);
-                fieldStart = false;
-            }
-        }
-
-        if (quoted) {
-            throw malformedCsvRow("Quoted value is not closed", input.length());
-        }
-        values.add(value.toString());
-        return values;
-    }
-
-    private static IllegalArgumentException malformedCsvRow(String reason, int index) {
-        return new IllegalArgumentException(
-                "Malformed CSV row at character " + index + ": " + reason + '.'
-        );
-    }
 }

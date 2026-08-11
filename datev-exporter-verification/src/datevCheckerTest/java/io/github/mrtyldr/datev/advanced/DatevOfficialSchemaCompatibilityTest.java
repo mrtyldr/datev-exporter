@@ -1,5 +1,8 @@
 package io.github.mrtyldr.datev.advanced;
 
+import io.github.mrtyldr.datev.core.DatevHeader;
+import io.github.mrtyldr.datev.core.DatevMetadata;
+import io.github.mrtyldr.datev.core.DatevRowValidator;
 import io.github.mrtyldr.datev.core.DatevFieldSpec;
 import io.github.mrtyldr.datev.core.DatevFieldSpecs;
 import io.github.mrtyldr.datev.core.DatevSchema;

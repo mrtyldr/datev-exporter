@@ -1,6 +1,6 @@
 package io.github.mrtyldr.datev.advanced;
 
-import com.univocity.parsers.csv.CsvWriterSettings;
+import io.github.mrtyldr.datev.core.DatevHeader;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
@@ -18,24 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DatevFileFactoryTest {
 
-    @Test
-    void defaultFactoryUsesCurrentHeaderAndDatevWriterDefaults() {
-        DatevFile file = DatevFile.withDefaults();
-        CsvWriterSettings settings = file.csvWriterSettings();
-
-        assertEquals(DatevHeader.current(), file.header());
-        assertEquals(Charset.forName("windows-1252"), file.charset());
-        assertEquals(';', settings.getFormat().getDelimiter());
-        assertEquals("\r\n", new String(settings.getFormat().getLineSeparator()));
-        assertEquals("", settings.getNullValue());
-        assertEquals("", settings.getEmptyValue());
-        assertTrue(settings.isQuoteEscapingEnabled());
-        assertTrue(settings.isHeaderWritingEnabled());
-        assertFalse(settings.getSkipEmptyLines());
-        assertFalse(settings.getIgnoreLeadingWhitespaces());
-        assertFalse(settings.getIgnoreTrailingWhitespaces());
-        assertArrayEquals(file.headers().toArray(String[]::new), settings.getHeaders());
-    }
 
     @Test
     void customHeaderFactoriesAreEquivalentAndDefensive() {
@@ -71,20 +53,6 @@ class DatevFileFactoryTest {
         assertEquals(0, second.rowCount());
     }
 
-    @Test
-    void eachSettingsCallReturnsAnIndependentConfiguration() {
-        DatevFile file = DatevFile.withHeader("A;B");
-        CsvWriterSettings first = file.csvWriterSettings();
-        CsvWriterSettings second = file.csvWriterSettings();
-
-        first.getFormat().setDelimiter(',');
-        first.setHeaders("changed");
-
-        assertNotSame(first, second);
-        assertEquals(';', second.getFormat().getDelimiter());
-        assertArrayEquals(new String[]{"A", "B"}, second.getHeaders());
-        assertEquals(List.of("A", "B"), file.headers());
-    }
 
     @Test
     void publicSnapshotsCannotMutateFileState() {

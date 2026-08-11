@@ -1,6 +1,8 @@
 package io.github.mrtyldr.datev.plain;
 
 import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevCsv;
+import io.github.mrtyldr.datev.core.DatevMetadata;
 import io.github.mrtyldr.datev.core.DatevSchema;
 
 import java.io.IOException;
@@ -20,8 +22,9 @@ import java.util.function.BiConsumer;
 /**
  * Writes a fixed DATEV column-heading record and booking rows without retaining completed rows.
  *
- * <p>This lean writer never emits the mandatory EXTF management record. Use the advanced
- * {@code datev-exporter} artifact when a complete Buchungsstapel file is required.
+ * <p>Attach a {@link DatevMetadata} through {@link #builder()} to emit the mandatory EXTF
+ * management record before the heading and produce a complete, importable Buchungsstapel file.
+ * Both records are written when the writer is constructed.
  *
  * <p>Each append is fully aligned, formatted, structurally checked, optionally validated and
  * serialized in row-local memory before output begins. Successfully written rows are discarded, so
@@ -45,15 +48,38 @@ public final class DatevStreamWriter implements AutoCloseable {
     private Throwable failure;
     private int rowCount;
 
+    private final DatevMetadata metadata;
+
     private DatevStreamWriter(
             DatevSchema schema,
             RowSink sink,
-            BiConsumer<Integer, List<String>> validator
+            BiConsumer<Integer, List<String>> validator,
+            DatevMetadata metadata
     ) {
         this.schema = Objects.requireNonNull(schema, "schema");
         this.sink = Objects.requireNonNull(sink, "sink");
         this.rowAssembler = new DatevRowAssembler(schema, validator);
+        this.metadata = metadata;
         writeHeader();
+    }
+
+    /**
+     * Creates a builder for the current v13 schema.
+     *
+     * @return a new builder
+     */
+    public static Builder builder() {
+        return new Builder(DatevSchema.current());
+    }
+
+    /**
+     * Creates a builder for an explicit fixed schema.
+     *
+     * @param schema the fixed schema to use
+     * @return a new builder
+     */
+    public static Builder builder(DatevSchema schema) {
+        return new Builder(Objects.requireNonNull(schema, "schema"));
     }
 
     /**
@@ -160,7 +186,7 @@ public final class DatevStreamWriter implements AutoCloseable {
      * @return a new forward-only writer whose column heading has been written
      */
     public static DatevStreamWriter forSchema(DatevSchema schema, OutputStream output) {
-        return new DatevStreamWriter(schema, byteSink(output), null);
+        return new DatevStreamWriter(schema, byteSink(output), null, null);
     }
 
     /**
@@ -176,11 +202,9 @@ public final class DatevStreamWriter implements AutoCloseable {
             OutputStream output,
             BiConsumer<Integer, List<String>> validator
     ) {
-        return new DatevStreamWriter(
-                schema,
+        return new DatevStreamWriter(schema,
                 byteSink(output),
-                Objects.requireNonNull(validator, "validator")
-        );
+                Objects.requireNonNull(validator, "validator"), null);
     }
 
     /**
@@ -191,7 +215,7 @@ public final class DatevStreamWriter implements AutoCloseable {
      * @return a new forward-only writer whose column heading has been written
      */
     public static DatevStreamWriter forSchema(DatevSchema schema, Writer output) {
-        return new DatevStreamWriter(schema, characterSink(output), null);
+        return new DatevStreamWriter(schema, characterSink(output), null, null);
     }
 
     /**
@@ -207,11 +231,9 @@ public final class DatevStreamWriter implements AutoCloseable {
             Writer output,
             BiConsumer<Integer, List<String>> validator
     ) {
-        return new DatevStreamWriter(
-                schema,
+        return new DatevStreamWriter(schema,
                 characterSink(output),
-                Objects.requireNonNull(validator, "validator")
-        );
+                Objects.requireNonNull(validator, "validator"), null);
     }
 
     /**
@@ -248,6 +270,24 @@ public final class DatevStreamWriter implements AutoCloseable {
      */
     public Optional<BiConsumer<Integer, List<String>>> validator() {
         return Optional.ofNullable(rowAssembler.validator());
+    }
+
+    /**
+     * Returns the EXTF management record written before the heading, if any.
+     *
+     * @return the configured metadata
+     */
+    public Optional<DatevMetadata> metadata() {
+        return Optional.ofNullable(metadata);
+    }
+
+    /**
+     * Returns whether the output contains the mandatory EXTF management record.
+     *
+     * @return {@code true} if metadata was configured
+     */
+    public boolean isCompleteExtf() {
+        return metadata != null;
     }
 
     /**
@@ -391,7 +431,7 @@ public final class DatevStreamWriter implements AutoCloseable {
         boolean sinkTouched = false;
         try {
             List<String> row = supplier.get();
-            String record = DatevCsvEncoder.encodeRow(schema, row);
+            String record = DatevCsv.encodeRecord(row, schema::isTextColumn);
             sinkTouched = true;
             sink.write(record);
             rowCount++;
@@ -415,9 +455,78 @@ public final class DatevStreamWriter implements AutoCloseable {
 
     private void writeHeader() {
         try {
-            sink.write(DatevCsvEncoder.encodeHeader(schema));
+            if (metadata != null) {
+                sink.write(metadata.toCsvLine() + DatevCsv.LINE_SEPARATOR);
+            }
+            sink.write(DatevCsv.encodeRecord(schema.headers(), DatevCsv.QUOTE_NONE));
         } catch (IOException exception) {
             throw new UncheckedIOException("Could not write DATEV CSV heading.", exception);
+        }
+    }
+
+    /**
+     * Configures a streaming writer, including the optional EXTF management record.
+     *
+     * <p>The static factories cover the common cases; this builder exists so schema, validator and
+     * metadata can be combined without a factory per combination. Nothing is written until one of
+     * the {@code build} methods is called. Instances are not thread-safe.
+     */
+    public static final class Builder {
+        private final DatevSchema schema;
+        private BiConsumer<Integer, List<String>> validator;
+        private DatevMetadata metadata;
+
+        private Builder(DatevSchema schema) {
+            this.schema = schema;
+        }
+
+        /**
+         * Sets the optional row validator.
+         *
+         * @param validator receives the format version and each immutable aligned row
+         * @return this builder
+         */
+        public Builder validator(BiConsumer<Integer, List<String>> validator) {
+            this.validator = Objects.requireNonNull(validator, "validator");
+            return this;
+        }
+
+        /**
+         * Sets the EXTF management record written before the heading.
+         *
+         * @param metadata the management record
+         * @return this builder
+         * @throws IllegalArgumentException if the metadata's format version differs from the schema
+         */
+        public Builder metadata(DatevMetadata metadata) {
+            Objects.requireNonNull(metadata, "metadata");
+            if (metadata.formatVersion() != schema.formatVersion()) {
+                throw new IllegalArgumentException("DATEV metadata declares format version "
+                        + metadata.formatVersion() + " but the schema is version "
+                        + schema.formatVersion() + '.');
+            }
+            this.metadata = metadata;
+            return this;
+        }
+
+        /**
+         * Starts a writer on a caller-owned byte stream, emitting Windows-1252 directly.
+         *
+         * @param output the caller-owned destination stream
+         * @return a new writer that has already written its leading records
+         */
+        public DatevStreamWriter build(OutputStream output) {
+            return new DatevStreamWriter(schema, byteSink(output), validator, metadata);
+        }
+
+        /**
+         * Starts a writer on a caller-owned character writer.
+         *
+         * @param output the caller-owned destination writer
+         * @return a new writer that has already written its leading records
+         */
+        public DatevStreamWriter build(Writer output) {
+            return new DatevStreamWriter(schema, characterSink(output), validator, metadata);
         }
     }
 

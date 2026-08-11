@@ -72,7 +72,7 @@ jobs:
             :publishAndReleaseToMavenCentral \
             :datev-exporter-core:publishAndReleaseToMavenCentral \
             :datev-exporter-plain:publishAndReleaseToMavenCentral \
-            :datev-exporter-univocity:publishAndReleaseToMavenCentral \
+            :datev-exporter-advanced-univocity:publishAndReleaseToMavenCentral \
             :datev-exporter-field-validator:publishAndReleaseToMavenCentral \
             :datev-exporter-advanced:publishAndReleaseToMavenCentral \
             -PreleaseVersion="$RELEASE_VERSION"

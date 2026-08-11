@@ -1,14 +1,11 @@
 package io.github.mrtyldr.datev.advanced;
 
 import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevCsv;
+import io.github.mrtyldr.datev.core.DatevHeader;
+import io.github.mrtyldr.datev.core.DatevMetadata;
+import io.github.mrtyldr.datev.core.DatevRowValidator;
 import io.github.mrtyldr.datev.core.DatevValidationMode;
-
-import com.univocity.parsers.csv.CsvFormat;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
-import com.univocity.parsers.csv.CsvWriter;
-import com.univocity.parsers.csv.CsvWriterSettings;
-import com.univocity.parsers.csv.UnescapedQuoteHandling;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FilterWriter;
@@ -33,11 +30,14 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Builds header-aligned DATEV CSV rows and writes them through Univocity.
+ * Builds header-aligned DATEV CSV rows and writes a complete Buchungsstapel file.
  *
  * <p>A file's header is immutable. Appended rows are validated and converted atomically into that
- * header's order. The class itself is an iterable of rows, so a configured {@link CsvWriter} can
- * consume it directly with {@link CsvWriter#writeRows(Iterable)}.
+ * header's order. The class itself is an iterable of rows, so any row consumer can read it
+ * directly.
+ *
+ * <p>Serialization goes through {@link DatevCsv}, so this module has no third-party dependencies.
+ * For Univocity interoperability add {@code datev-exporter-advanced-univocity}.
  *
  * <p>Instances are mutable and are not thread-safe.
  */
@@ -240,105 +240,11 @@ public final class DatevFile implements Iterable<List<String>> {
         return rows().iterator();
     }
 
-    /**
-     * Creates a fresh Univocity configuration for this file.
-     *
-     * <p>The returned settings may be customized by the caller without mutating this file. A fresh
-     * {@link CsvWriter} writes the configured header automatically before its first data row. For
-     * an empty file, call {@link CsvWriter#writeHeaders()} explicitly or use a {@code writeTo}
-     * convenience method. These settings describe only the heading and booking-row section; an
-     * EXTF management record, when configured, is emitted only by the stream/writer convenience
-     * methods.
-     *
-     * @return a fresh writer configuration for this file
-     */
-    public CsvWriterSettings csvWriterSettings() {
-        return writerSettings(true, true);
-    }
 
-    private CsvWriterSettings writerSettings(boolean writeHeader, boolean quoteDatevFields) {
-        CsvFormat format = new CsvFormat();
-        format.setDelimiter(DEFAULT_DELIMITER);
-        format.setLineSeparator(DEFAULT_LINE_SEPARATOR);
 
-        CsvWriterSettings settings = new CsvWriterSettings();
-        settings.setFormat(format);
-        settings.setHeaders(header.namesArray());
-        settings.setHeaderWritingEnabled(writeHeader);
-        settings.setNullValue("");
-        settings.setEmptyValue("");
-        settings.setQuoteNulls(true);
-        settings.setQuoteEscapingEnabled(true);
-        settings.setSkipEmptyLines(false);
-        settings.setIgnoreLeadingWhitespaces(false);
-        settings.setIgnoreTrailingWhitespaces(false);
-        settings.setExpandIncompleteRows(false);
-        settings.setColumnReorderingEnabled(false);
-        settings.setMaxColumns(header.size());
-        Integer[] quotedIndexes = header.quotedIndexes();
-        if (quoteDatevFields && quotedIndexes.length > 0) {
-            settings.quoteIndexes(quotedIndexes);
-        }
-        return settings;
-    }
 
-    /**
-     * Creates a configured writer using this file's charset.
-     *
-     * <p>Unmappable characters are reported instead of being silently replaced. Closing the
-     * returned writer flushes but does not close the supplied stream. The returned writer is for
-     * the heading and booking-row section only and never emits EXTF metadata.
-     *
-     * @param output the caller-owned output stream
-     * @return a configured writer that writes to {@code output}
-     */
-    public CsvWriter newCsvWriter(OutputStream output) {
-        return newCsvWriter(output, csvWriterSettings());
-    }
 
-    /**
-     * Creates a writer with caller-customized settings while retaining strict charset handling and
-     * caller ownership of the output stream.
-     *
-     * @param output the caller-owned output stream
-     * @param settings the writer settings to use
-     * @return a writer that writes to {@code output} using {@code settings}
-     */
-    public CsvWriter newCsvWriter(OutputStream output, CsvWriterSettings settings) {
-        Objects.requireNonNull(output, "output");
-        Objects.requireNonNull(settings, "settings");
-        var encoder = charset.newEncoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        return new CsvWriter(
-                new NonClosingWriter(new OutputStreamWriter(output, encoder)),
-                settings
-        );
-    }
 
-    /**
-     * Creates a configured writer around a caller-provided character writer.
-     *
-     * @param output the caller-owned character writer
-     * @return a configured writer that writes to {@code output}
-     */
-    public CsvWriter newCsvWriter(Writer output) {
-        return newCsvWriter(output, csvWriterSettings());
-    }
-
-    /**
-     * Creates a writer around a caller-provided character writer and customized settings.
-     *
-     * @param output the caller-owned character writer
-     * @param settings the writer settings to use
-     * @return a writer that writes to {@code output} using {@code settings}
-     */
-    public CsvWriter newCsvWriter(Writer output, CsvWriterSettings settings) {
-        return new CsvWriter(
-                new NonClosingWriter(Objects.requireNonNull(output, "output")),
-                Objects.requireNonNull(settings, "settings")
-        );
-    }
 
     /**
      * Appends a semicolon-delimited CSV row.
@@ -352,26 +258,8 @@ public final class DatevFile implements Iterable<List<String>> {
         Objects.requireNonNull(semicolonSeparatedRow, "semicolonSeparatedRow");
         rejectControlCharacters(semicolonSeparatedRow, "CSV row");
         validateCsvRowSyntax(semicolonSeparatedRow);
+        append(DatevCsv.parseRecord(semicolonSeparatedRow).toArray(String[]::new));
 
-        CsvParserSettings settings = new CsvParserSettings();
-        settings.getFormat().setDelimiter(DEFAULT_DELIMITER);
-        settings.setSkipEmptyLines(false);
-        settings.setCommentProcessingEnabled(false);
-        settings.setIgnoreLeadingWhitespaces(false);
-        settings.setIgnoreTrailingWhitespaces(false);
-        settings.setIgnoreLeadingWhitespacesInQuotes(false);
-        settings.setIgnoreTrailingWhitespacesInQuotes(false);
-        settings.setEmptyValue("");
-        settings.setNullValue("");
-        settings.setUnescapedQuoteHandling(UnescapedQuoteHandling.RAISE_ERROR);
-        settings.setMaxColumns(header.size());
-        settings.setMaxCharsPerColumn(Math.max(1, semicolonSeparatedRow.length()));
-
-        String[] parsed = new CsvParser(settings).parseLine(semicolonSeparatedRow);
-        if (parsed == null) {
-            parsed = new String[]{""};
-        }
-        append(parsed);
     }
 
     /**
@@ -431,7 +319,7 @@ public final class DatevFile implements Iterable<List<String>> {
 
         for (int position = 0; position < identifiers.size(); position++) {
             String identifier = identifiers.get(position);
-            int index = header.resolve(identifier);
+            int index = header.indexOf(identifier);
             ensureUnassigned(assignedIndexes, index, identifier);
             resolvedIndexes[position] = index;
         }
@@ -497,7 +385,7 @@ public final class DatevFile implements Iterable<List<String>> {
         for (int position = 0; position < snapshot.size(); position++) {
             DatevColumn<?> column = snapshot.get(position);
             Objects.requireNonNull(column, "columns must not contain null");
-            int index = header.resolve(column.header());
+            int index = header.indexOf(column.header());
             ensureUnassigned(assignedIndexes, index, column.header());
             resolvedIndexes[position] = index;
         }
@@ -548,53 +436,20 @@ public final class DatevFile implements Iterable<List<String>> {
             throw new UncheckedIOException("Could not write DATEV metadata.", exception);
         }
 
-        CsvWriter headerWriter = new CsvWriter(destination, writerSettings(true, false));
-        headerWriter.writeHeaders();
-        headerWriter.flush();
-
-        CsvWriter rowWriter = new CsvWriter(destination, writerSettings(false, true));
-        rowWriter.writeRows(this);
-        rowWriter.flush();
-    }
-
-    /**
-     * Writes a data-only file to a fresh, compatibly configured {@link CsvWriter} and flushes it.
-     *
-     * <p>The writer is not closed. It must not already contain records and should have been created
-     * from {@link #csvWriterSettings()}.
-     *
-     * <p>An arbitrary {@code CsvWriter} cannot safely emit the differently shaped 31-field EXTF
-     * management record. When this file has metadata, use {@link #writeTo(OutputStream)} or
-     * {@link #writeTo(Writer)} for complete output, or call {@link #writeDataTo(CsvWriter)}
-     * explicitly when only the heading and booking rows are intended.
-     *
-     * @param writer the fresh, compatibly configured destination writer
-     * @throws IllegalStateException if this file contains metadata
-     */
-    public void writeTo(CsvWriter writer) {
-        if (metadata != null) {
-            throw new IllegalStateException(
-                    "A CsvWriter cannot emit the EXTF management record; use writeTo(OutputStream/Writer) "
-                            + "for a complete file or writeDataTo(CsvWriter) explicitly."
-            );
+        StringBuilder csv = new StringBuilder();
+        DatevCsv.appendRecord(csv, header.names(), DatevCsv.QUOTE_NONE);
+        for (List<String> row : rows) {
+            DatevCsv.appendRecord(csv, row, header::isQuotedColumn);
         }
-        writeDataTo(writer);
+        try {
+            destination.write(csv.toString());
+            destination.flush();
+        } catch (IOException exception) {
+            throw new UncheckedIOException("Could not write DATEV rows.", exception);
+        }
     }
 
-    /**
-     * Writes only the DATEV heading and booking rows through a caller-provided writer.
-     *
-     * <p>This deliberately omits the EXTF management record even when metadata is configured.
-     * The writer is flushed but not closed.
-     *
-     * @param writer the fresh, compatibly configured destination writer
-     */
-    public void writeDataTo(CsvWriter writer) {
-        Objects.requireNonNull(writer, "writer");
-        writer.writeHeaders();
-        writer.writeRows(this);
-        writer.flush();
-    }
+
 
     /**
      * Returns the complete CSV as bytes in {@link #charset()}.
@@ -645,7 +500,7 @@ public final class DatevFile implements Iterable<List<String>> {
         if (currentRowCount < 0) {
             throw new IllegalArgumentException("Current row count must not be negative.");
         }
-        if (header.bookingBatchFormatVersion() != null && currentRowCount >= MAX_DATA_ROWS) {
+        if (header.bookingBatchVersion().isPresent() && currentRowCount >= MAX_DATA_ROWS) {
             throw new IllegalStateException(
                     "A DATEV Buchungsstapel file can contain at most " + MAX_DATA_ROWS
                             + " booking rows."
@@ -767,7 +622,7 @@ public final class DatevFile implements Iterable<List<String>> {
 
         private Builder(DatevHeader header) {
             this.header = Objects.requireNonNull(header, "header");
-            this.validationMode = header.bookingBatchFormatVersion() == null
+            this.validationMode = header.bookingBatchVersion().isEmpty()
                     ? DatevValidationMode.NONE
                     : DatevValidationMode.STRICT;
         }

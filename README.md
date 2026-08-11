@@ -7,19 +7,33 @@
 | Artifact | Java package | Runtime dependencies | Intended use |
 | --- | --- | --- | --- |
 | `datev-exporter` | — | — | Bill of Materials aligning every module on one version |
-| `datev-exporter-core` | `io.github.mrtyldr.datev.core` | None | Canonical schema, field definitions, shared types and the validation core |
-| `datev-exporter-plain` | `io.github.mrtyldr.datev.plain` | `core` only (no third-party) | Fixed v13/v12 schemas, buffered `DatevFile` and forward-only `DatevStreamWriter` |
-| `datev-exporter-univocity` | `io.github.mrtyldr.datev.univocity` | `core` + Univocity | Matching buffered fixed-schema API backed by Univocity |
-| `datev-exporter-field-validator` | `io.github.mrtyldr.datev.validation` | `core` only | Optional semantic validator supplied alongside either lean exporter |
-| `datev-exporter-advanced` | `io.github.mrtyldr.datev.advanced` | `core` + Univocity | Advanced API: EXTF metadata, custom headers, rename/reorder and built-in validation |
+| `datev-exporter-core` | `io.github.mrtyldr.datev.core` | None | Canonical schema, field definitions, EXTF metadata, the CSV codec and the validation engine |
+| `datev-exporter-plain` | `io.github.mrtyldr.datev.plain` | `core` only | Fixed v13/v12 schemas, buffered `DatevFile` and forward-only `DatevStreamWriter` |
+| `datev-exporter-advanced` | `io.github.mrtyldr.datev.advanced` | `core` only | Custom headers, rename/reorder and built-in validation modes |
+| `datev-exporter-field-validator` | `io.github.mrtyldr.datev.validation` | `core` only | Optional semantic validator for the plain exporter |
+| `datev-exporter-advanced-univocity` | `io.github.mrtyldr.datev.advanced.univocity` | `advanced` + Univocity | Univocity `CsvWriter` interoperability for the advanced exporter |
 
-`datev-exporter-core` holds the single canonical copy of DATEV's 125/124-column table, the field
-specifications, `DatevSchema`, `DatevColumn`, the optional `DatevField` column enum, the
-`DatevInfoBlock` slot helper and the semantic validation engine. It has **no third-party
-dependencies**; every other module builds on it, so all modules share one verified schema and one
+**No exporter has a third-party runtime dependency.** `datev-exporter-core` holds the single
+canonical copy of DATEV's 125/124-column table, the field specifications, `DatevSchema`,
+`DatevColumn`, the optional `DatevField` column enum, the `DatevInfoBlock` slot helper,
+`DatevMetadata`, `DatevHeader`, the `DatevCsv` record codec and the semantic validation engine.
+Every other module builds on it, so all modules share one verified schema, one serializer and one
 set of validation rules.
 
-The two lean exporters deliberately have different Java packages, so they can be compared in one application without duplicate-class conflicts. They expose matching buffered `DatevFile` APIs over the shared `DatevColumn` and `DatevSchema` types and accept the same standard validator callback. The plain artifact additionally provides the forward-only `DatevStreamWriter`. Neither lean exporter supports custom, renamed or reordered headers; use `datev-exporter-advanced` when those features or a complete EXTF management record are needed.
+### Which exporter?
+
+Start with `datev-exporter-plain`. It writes both fixed official schemas, produces a complete
+Buchungsstapel file when a `DatevMetadata` is attached, and is the only module offering
+`DatevStreamWriter` for writing rows without retaining them.
+
+Add `datev-exporter-advanced` when the output must use custom, renamed or reordered headings, or
+when validation strictness has to be selected per file through `DatevValidationMode`. DATEV fixes
+the names and order of its official schemas, so renaming or reordering creates a custom downstream
+CSV contract and is intentionally incompatible with `DatevMetadata`.
+
+Add `datev-exporter-advanced-univocity` only if the surrounding application already routes CSV
+output through a Univocity `CsvWriter` and that writer has to produce the DATEV file. It changes no
+bytes the exporters would otherwise write; it only lets an existing Univocity pipeline emit them.
 
 ## Requirements
 
@@ -51,26 +65,26 @@ repositories {
 dependencies {
     implementation platform('io.github.mrtyldr:datev-exporter:0.2.0-SNAPSHOT')
 
-    // No third-party runtime dependencies; pulls in datev-exporter-core transitively:
+    // Fixed schemas, EXTF metadata and streaming; pulls in datev-exporter-core transitively:
     implementation 'io.github.mrtyldr:datev-exporter-plain'
 
-    // Or the lean Univocity implementation:
-    // implementation 'io.github.mrtyldr:datev-exporter-univocity'
-
-    // Optional for either lean implementation:
+    // Optional semantic validator for the plain exporter:
     implementation 'io.github.mrtyldr:datev-exporter-field-validator'
 
-    // Or the full-featured exporter with EXTF metadata and custom headers:
+    // Add only for custom, renamed or reordered headings:
     // implementation 'io.github.mrtyldr:datev-exporter-advanced'
+
+    // Add only to write through an existing Univocity CsvWriter:
+    // implementation 'io.github.mrtyldr:datev-exporter-advanced-univocity'
 }
 ```
 
 Without the BOM, declare each module's version explicitly, for example
 `implementation 'io.github.mrtyldr:datev-exporter-plain:0.2.0-SNAPSHOT'`.
 
-## Lean fixed-schema exporters
+## The plain fixed-schema exporter
 
-The plain implementation — which pulls in no third-party dependencies — creates a current v13 file by default. `DatevFile` retains its rows so they can be inspected, iterated and written more than once:
+The plain exporter creates a current v13 file by default. `DatevFile` retains its rows so they can be inspected, iterated and written more than once:
 
 ```java
 import io.github.mrtyldr.datev.core.DatevColumn;
@@ -107,13 +121,13 @@ Official headings are exact strings, but they do not have to be typed by hand; s
 
 Use `DatevFile.legacyV12()` for the fixed 124-column schema. The complete-row overloads are `append(String)`, `append(String[])`, `append(Collection<String>)` and `appendValues(Object...)`; sparse rows use `append(Map<String, ?>)`, `append(DatevColumn<?>...)`, `append(Iterable<? extends DatevColumn<?>>)` or `appendColumns(...)`. Every append is atomic and requires exact official header names.
 
-To select the Univocity implementation, change the `DatevFile` import to `io.github.mrtyldr.datev.univocity.DatevFile`; the shared `DatevColumn` and `DatevSchema` types stay in `io.github.mrtyldr.datev.core` and the code above remains the same. That artifact additionally exposes fresh, data-only `CsvWriterSettings`, configured `CsvWriter` factories and `writeDataTo(CsvWriter)`. A single Univocity writer cannot apply different quote policies to headings and rows, so those APIs deliberately write booking rows only. `writeTo(OutputStream)` and `writeTo(Writer)` are the canonical header-and-rows path: they write the official heading unquoted and apply DATEV text quoting only to data rows.
+Without metadata the output begins with the column-heading record and does not contain the mandatory EXTF management record. That is useful when another component supplies that record or a downstream system expects only headings and rows. Attach a `DatevMetadata` — see [Create a complete Buchungsstapel file](#create-a-complete-buchungsstapel-file) — for a file DATEV can import directly.
 
-The lean outputs begin with the column-heading record and do not contain the mandatory EXTF management record. They are useful when another component provides that record or a downstream system expects only headings and rows. Use the advanced artifact for a complete Buchungsstapel file.
+`writeTo(OutputStream)` and `writeTo(Writer)` write the official heading unquoted and apply DATEV text quoting only to data rows. Serialization goes through `DatevCsv` in the core module, so every exporter emits byte-identical records for the same input.
 
 ### Optional semantic validation
 
-The lean exporters perform structural CSV checks without pulling semantic rules into the base artifact. Add `datev-exporter-field-validator` and pass its implementation-neutral validator explicitly:
+The plain exporter performs structural CSV checks without pulling semantic rules into the base artifact. Add `datev-exporter-field-validator` and pass its implementation-neutral validator explicitly:
 
 ```java
 import io.github.mrtyldr.datev.core.DatevValidationContext;
@@ -132,7 +146,7 @@ DatevValidator validator = DatevValidator.builder()
 DatevFile validated = DatevFile.withDefaults(validator);
 ```
 
-The same `DatevValidator` instance can be passed directly to the Univocity lean artifact. It implements a JDK-only callback receiving the format version and immutable row, so the validator JAR does not link to either exporter. Use `strict()`, `fieldLevel()` or the contextual builder. Adding the validator dependency alone does not change exporter behavior; validation is enabled only when a validator is passed to a factory.
+The same `DatevValidator` instance can be passed to `DatevStreamWriter`. It implements a JDK-only callback receiving the format version and immutable row, so the validator JAR does not link to any exporter. Use `strict()`, `fieldLevel()` or the contextual builder. Adding the validator dependency alone does not change exporter behavior; validation is enabled only when a validator is passed to a factory or builder. The advanced exporter does not take this callback — it selects strictness through `DatevValidationMode` instead.
 
 `STRICT` is calibrated against the pinned DATEV checker schema and all 54 rows in DATEV's official v13 sample. Where a portal expression is narrower than the official sample, the sample-compatible representation is accepted instead of inventing a rule that rejects DATEV's own data. The validator checks deterministic technical semantics; a real checker and product import remain the final boundary for client-specific accounting rules.
 
@@ -172,13 +186,27 @@ try (OutputStream output = Files.newOutputStream(Path.of("booking-rows.csv"));
 
 The streaming writer exposes the same append overloads as the plain `DatevFile`. Use `legacyV12(output)` for v12, or enable the optional semantic validator with `withDefaults(output, DatevValidator.strict())`. `rowCount()` reports successfully handed-off booking rows, and the same 99,999-row DATEV limit applies.
 
+`DatevStreamWriter.builder()` combines schema, validator and EXTF metadata without a factory per combination. Nothing is written until `build(...)` is called; the management record and heading are then emitted immediately:
+
+```java
+try (OutputStream output = Files.newOutputStream(Path.of("EXTF_Buchungsstapel.csv"));
+     DatevStreamWriter writer = DatevStreamWriter.builder()
+             .metadata(metadata)
+             .validator(DatevValidator.strict())
+             .build(output)) {
+    for (Map<String, ?> row : bookingRows) {
+        writer.append(row);
+    }
+}
+```
+
 Successfully written rows are not retained. Library-managed working memory is proportional to one aligned 124/125-cell row plus that row's encoded CSV record—`O(largest row)`, rather than `O(total rows)`. This does not prevent a validator or caller-supplied destination such as `ByteArrayOutputStream` or `StringWriter` from retaining rows or the complete output; use a file, network stream or another genuinely streaming destination when heap usage matters. Prefer the `OutputStream` factories for canonical Windows-1252 bytes; a caller-supplied `Writer` remains responsible for its eventual byte encoding. The buffered `DatevFile.writeTo(...)` now also serializes its stored records one at a time, but the `DatevFile` itself continues to retain every appended row.
 
 Formatting, structural, Windows-1252 and optional semantic validation finish before a row is sent to the destination. Those failures do not change the output and the writer remains usable. An I/O failure may happen after the destination accepted part of a record, so physical rollback cannot be guaranteed; after such a failure the writer becomes terminal. During normal completion, `close()` flushes but never closes the caller-owned stream or writer. After a destination failure it does not retry flushing; the caller decides whether to flush or discard the potentially partial output.
 
 ## Create a complete Buchungsstapel file
 
-A DATEV-Format file has three parts: the EXTF management record, the column-heading record and the booking records. Build the required v13 metadata explicitly and attach it to the default file:
+A DATEV-Format file has three parts: the EXTF management record, the column-heading record and the booking records. `DatevMetadata` lives in `datev-exporter-core`, so both the plain and the advanced exporter can emit a complete file. Build the required v13 metadata explicitly and attach it through the builder:
 
 ```java
 LocalDate periodStart = LocalDate.of(2026, 8, 1);
@@ -201,7 +229,8 @@ DatevMetadata metadata = DatevMetadata.bookingBatchV13()
         .applicationInformation("my-application")
         .build();
 
-DatevFile file = DatevFile.withDefaults(metadata);
+// io.github.mrtyldr.datev.plain.DatevFile
+DatevFile file = DatevFile.builder().metadata(metadata).build();
 file.append(Map.of(
         "Umsatz (ohne Soll/Haben-Kz)", "1250,00",
         "Soll/Haben-Kennzeichen", "S",
@@ -216,11 +245,13 @@ try (OutputStream output = Files.newOutputStream(Path.of("EXTF_Buchungsstapel.cs
 }
 ```
 
-`DatevMetadata` fixes the format identifier to external `EXTF`, header version 700, format category 21, `Buchungsstapel`, and format version 13. Its builder validates the timestamp, adviser/client numbers, fiscal year, account length, period and optional metadata fields. Metadata can only be combined with the exact v13 header, strict validation and the DATEV Windows-1252 output profile.
+`DatevMetadata` fixes the format identifier to external `EXTF`, header version 700, format category 21, `Buchungsstapel`, and format version 13. Its builder validates the timestamp, adviser/client numbers, fiscal year, account length, period and optional metadata fields. The plain builder additionally rejects metadata whose format version differs from the selected schema, so a file cannot declare a version it does not contain.
 
-`DatevFile.withDefaults()` remains available for a header-and-data-only v13 document. Use the metadata overload when the result must contain the mandatory first record.
+`DatevFile.withDefaults()` remains available for a heading-and-rows-only v13 document. Use the builder when the result must contain the mandatory first record. The advanced exporter accepts the same metadata through `DatevFile.withDefaults(metadata)` and `DatevFile.builder().metadata(metadata)`; there it can only be combined with the exact official header, strict validation and the DATEV Windows-1252 output profile.
 
 ## Semantic validation
+
+The sections below describe `datev-exporter-advanced`, whose `DatevFile` selects strictness per file. The plain exporter instead takes an optional validator callback; see [Optional semantic validation](#optional-semantic-validation).
 
 Official schemas default to `DatevValidationMode.STRICT`. Strict mode validates required fields, DATEV amount/number/date/account representations, text lengths and documented cross-field dependencies before a row is appended. The append is atomic: any `DatevValidationException` leaves the file unchanged and exposes every structured `DatevValidationError` through `errors()`.
 
@@ -247,6 +278,8 @@ DatevFile structuralOnly = DatevFile.builder()
 Custom headers default to `NONE` because their domain semantics are unknown. Validation confirms DATEV syntax and documented structural rules; it does not decide the accounting or tax correctness of a booking.
 
 ## Custom headers
+
+Custom, renamed and reordered headings are `datev-exporter-advanced` features; the plain exporter deliberately supports the fixed official schemas only.
 
 Custom headers can be supplied in three equivalent forms:
 
@@ -400,31 +433,37 @@ Use `DatevInfoBlock.documentInfo()` for `Beleginfo`, or `DatevInfoBlock.of(Datev
 
 ## Writer interoperability
 
-`writeTo(OutputStream)` and `writeTo(Writer)` emit the management record first when metadata is configured, followed by the heading and rows. They flush but do not close caller-owned output.
+`writeTo(OutputStream)` and `writeTo(Writer)` emit the management record first when metadata is configured, followed by the heading and rows. They flush but do not close caller-owned output. Every exporter serializes through `DatevCsv`, so no third-party CSV library is involved.
 
-For data-only files, `DatevFile` implements `Iterable<List<String>>` and can be sent directly to a configured Univocity writer:
+### Univocity
+
+Add `datev-exporter-advanced-univocity` when an existing Univocity pipeline has to produce the file. `DatevUnivocityWriters` builds writers and settings configured for a given advanced `DatevFile`, which itself implements `Iterable<List<String>>`:
 
 ```java
-CsvWriter writer = file.newCsvWriter(outputStream);
+import io.github.mrtyldr.datev.advanced.univocity.DatevUnivocityWriters;
+
+CsvWriter writer = DatevUnivocityWriters.newCsvWriter(file, outputStream);
 writer.writeHeaders();
 writer.writeRows(file);
 writer.flush();
 ```
 
-Raw `CsvWriter` does not know about the EXTF management record. A metadata-backed file therefore rejects `writeTo(CsvWriter)`; use the explicitly data-only `writeDataTo(CsvWriter)` when that is intentional, or use an output stream/writer for the complete file.
+A `CsvWriter` emits one uniformly shaped record type and cannot produce the differently shaped 31-field EXTF management record. `DatevUnivocityWriters.writeTo(file, writer)` therefore rejects a metadata-backed file; use `writeDataTo(file, writer)` when heading-and-rows output is intentional, or `DatevFile.writeTo(OutputStream)` for the complete file.
 
-`newCsvWriter(OutputStream)` reports unmappable characters instead of silently replacing them and does not close the caller-owned stream. Avoid Univocity's raw `(OutputStream, Charset, settings)` constructor for DATEV output because Java's default encoder replacement can silently turn unsupported characters into `?`.
+A single `CsvWriter` also cannot apply one quote policy to the heading and another to the rows, so it quotes the heading's text columns as well. The booking rows are byte-identical to the built-in writer; `DatevFile.writeTo(OutputStream/Writer)` remains the canonical unquoted-heading path.
 
-`csvWriterSettings()` returns a fresh object. Official v12/v13 schemas quote their defined text columns. A custom header uses generic CSV quoting; configure custom text fields explicitly:
+`newCsvWriter(file, OutputStream)` reports unmappable characters instead of silently replacing them and does not close the caller-owned stream. Avoid Univocity's raw `(OutputStream, Charset, settings)` constructor for DATEV output because Java's default encoder replacement can silently turn unsupported characters into `?`.
+
+`csvWriterSettings(file)` returns a fresh object. Official v12/v13 schemas quote their defined text columns. A custom header uses generic CSV quoting; configure custom text fields explicitly:
 
 ```java
 DatevFile customFile = DatevFile.withHeader("text;number");
 customFile.append(List.of("description", "1000"));
 
-CsvWriterSettings settings = customFile.csvWriterSettings();
+CsvWriterSettings settings = DatevUnivocityWriters.csvWriterSettings(customFile);
 settings.quoteFields("text");
-CsvWriter writer = customFile.newCsvWriter(outputStream, settings);
-customFile.writeTo(writer);
+CsvWriter writer = DatevUnivocityWriters.newCsvWriter(customFile, outputStream, settings);
+DatevUnivocityWriters.writeTo(customFile, writer);
 ```
 
 ## Official DATEV checker compatibility

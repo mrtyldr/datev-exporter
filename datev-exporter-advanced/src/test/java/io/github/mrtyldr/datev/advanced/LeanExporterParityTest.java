@@ -1,5 +1,6 @@
 package io.github.mrtyldr.datev.advanced;
 
+import io.github.mrtyldr.datev.core.DatevHeader;
 import io.github.mrtyldr.datev.core.DatevRowSamples;
 import io.github.mrtyldr.datev.core.DatevSchema;
 import io.github.mrtyldr.datev.core.DatevValidationContext;
@@ -28,32 +29,34 @@ class LeanExporterParityTest {
         Map<String, Object> row = validSparseRow();
 
         var plainCurrent = io.github.mrtyldr.datev.plain.DatevFile.withDefaults();
-        var univocityCurrent = io.github.mrtyldr.datev.univocity.DatevFile.withDefaults();
+        var advancedCurrent = DatevFile.withDefaults();
         plainCurrent.append(row);
-        univocityCurrent.append(row);
-        assertArrayEquals(plainCurrent.toByteArray(), univocityCurrent.toByteArray());
+        advancedCurrent.append(row);
+        assertArrayEquals(plainCurrent.toByteArray(), advancedCurrent.toByteArray());
 
         var plainLegacy = io.github.mrtyldr.datev.plain.DatevFile.legacyV12();
-        var univocityLegacy = io.github.mrtyldr.datev.univocity.DatevFile.legacyV12();
+        var advancedLegacy = DatevFile.withHeader(DatevHeader.legacyV12());
         plainLegacy.append(row);
-        univocityLegacy.append(row);
-        assertArrayEquals(plainLegacy.toByteArray(), univocityLegacy.toByteArray());
+        advancedLegacy.append(row);
+        assertArrayEquals(plainLegacy.toByteArray(), advancedLegacy.toByteArray());
     }
 
     @Test
     void structuralModePreservesALeadingHashIdentically() {
         Map<String, Object> row = Map.of("Umsatz (ohne Soll/Haben-Kz)", "#value");
         var plain = io.github.mrtyldr.datev.plain.DatevFile.withDefaults();
-        var univocity = io.github.mrtyldr.datev.univocity.DatevFile.withDefaults();
+        var advanced = DatevFile.builder()
+                .validationMode(io.github.mrtyldr.datev.core.DatevValidationMode.NONE)
+                .build();
 
         plain.append(row);
-        univocity.append(row);
+        advanced.append(row);
 
-        assertArrayEquals(plain.toByteArray(), univocity.toByteArray());
+        assertArrayEquals(plain.toByteArray(), advanced.toByteArray());
     }
 
     @Test
-    void optionalValidatorAdaptersAcceptAndRejectTheSameRows() {
+    void theOptionalValidatorAndBuiltInStrictModeAgree() {
         DatevValidationContext context = DatevValidationContext.builder()
                 .accountLength(4)
                 .fiscalYearStart(LocalDate.of(2026, 1, 1))
@@ -62,19 +65,19 @@ class LeanExporterParityTest {
 
         DatevValidator validator = DatevValidator.builder().context(context).build();
         var plain = io.github.mrtyldr.datev.plain.DatevFile.withDefaults(validator);
-        var univocity = io.github.mrtyldr.datev.univocity.DatevFile.withDefaults(validator);
+        var advanced = DatevFile.withDefaults();
 
         Map<String, Object> valid = validSparseRow();
         plain.append(valid);
-        univocity.append(valid);
-        assertArrayEquals(plain.toByteArray(), univocity.toByteArray());
+        advanced.append(valid);
+        assertArrayEquals(plain.toByteArray(), advanced.toByteArray());
 
         Map<String, Object> invalid = new LinkedHashMap<>(valid);
         invalid.put("Belegdatum", "3102");
         assertThrows(DatevValidationException.class, () -> plain.append(invalid));
-        assertThrows(DatevValidationException.class, () -> univocity.append(invalid));
+        assertThrows(DatevValidationException.class, () -> advanced.append(invalid));
         assertEquals(1, plain.rowCount());
-        assertEquals(1, univocity.rowCount());
+        assertEquals(1, advanced.rowCount());
     }
 
     private static Map<String, Object> validSparseRow() {

@@ -24,9 +24,9 @@ class DatevExporterIntegrationTest {
     @Test
     void bothLeanExportersWriteTheSharedCoreHeaderLine() {
         var plain = io.github.mrtyldr.datev.plain.DatevFile.withDefaults();
-        var univocity = io.github.mrtyldr.datev.univocity.DatevFile.withDefaults();
+        var advanced = io.github.mrtyldr.datev.advanced.DatevFile.withDefaults();
 
-        assertArrayEquals(plain.toByteArray(), univocity.toByteArray());
+        assertArrayEquals(plain.toByteArray(), advanced.toByteArray());
         assertEquals(125, DatevSchema.CURRENT_V13.columnCount());
         assertEquals(124, DatevSchema.LEGACY_V12.columnCount());
         assertEquals(DatevSchema.LEGACY_V12.headers(),
@@ -48,10 +48,9 @@ class DatevExporterIntegrationTest {
     }
 
     @Test
-    void commonValidatorAcceptsUnivocityRowsAndRejectsInvalidAppendAtomically() {
-        io.github.mrtyldr.datev.univocity.DatevFile file =
-                io.github.mrtyldr.datev.univocity.DatevFile.withDefaults(
-                        DatevValidator.strict());
+    void builtInStrictModeMatchesTheOptionalValidatorOnAdvanced() {
+        io.github.mrtyldr.datev.advanced.DatevFile file =
+                io.github.mrtyldr.datev.advanced.DatevFile.withDefaults();
 
         file.append(validRequiredValues());
         assertEquals(1, file.rowCount());
@@ -92,11 +91,13 @@ class DatevExporterIntegrationTest {
 
         assertEquals(DatevValidationMode.FIELD_LEVEL, validator.mode());
         io.github.mrtyldr.datev.plain.DatevFile.legacyV12(validator).append(Map.of());
-        io.github.mrtyldr.datev.univocity.DatevFile.legacyV12(validator).append(Map.of());
+        io.github.mrtyldr.datev.plain.DatevStreamWriter
+                .legacyV12(new StringWriter(), validator)
+                .append(Map.of());
     }
 
     @Test
-    void contextualValidatorConstrainsBothExportersEqually() {
+    void contextualValidatorConstrainsBufferedAndStreamingOutputEqually() {
         DatevValidationContext context = DatevValidationContext.builder()
                 .accountLength(4)
                 .period(LocalDate.of(2024, 2, 1), LocalDate.of(2024, 2, 29))
@@ -109,29 +110,31 @@ class DatevExporterIntegrationTest {
         DatevValidationException plainError = assertThrows(DatevValidationException.class,
                 () -> io.github.mrtyldr.datev.plain.DatevFile.withDefaults(validator)
                         .append(invalidAccount));
-        DatevValidationException univocityError = assertThrows(DatevValidationException.class,
-                () -> io.github.mrtyldr.datev.univocity.DatevFile.withDefaults(validator)
+        DatevValidationException streamingError = assertThrows(DatevValidationException.class,
+                () -> io.github.mrtyldr.datev.plain.DatevStreamWriter
+                        .withDefaults(new StringWriter(), validator)
                         .append(invalidAccount));
 
-        assertEquals(plainError.errors(), univocityError.errors());
+        assertEquals(plainError.errors(), streamingError.errors());
         assertEquals(java.util.List.of(7, 10),
                 plainError.errors().stream().map(DatevValidationError::fieldNumber).toList());
     }
 
     @Test
-    void validatedPlainAndUnivocityExportsAreByteIdenticalForBothSchemas() {
+    void validatedPlainAndAdvancedExportsAreByteIdenticalForBothSchemas() {
         DatevValidator validator = DatevValidator.strict();
         var plainV13 = io.github.mrtyldr.datev.plain.DatevFile.withDefaults(validator);
-        var univocityV13 = io.github.mrtyldr.datev.univocity.DatevFile.withDefaults(validator);
+        var advancedV13 = io.github.mrtyldr.datev.advanced.DatevFile.withDefaults();
         plainV13.append(validRequiredValues());
-        univocityV13.append(validRequiredValues());
-        assertArrayEquals(plainV13.toByteArray(), univocityV13.toByteArray());
+        advancedV13.append(validRequiredValues());
+        assertArrayEquals(plainV13.toByteArray(), advancedV13.toByteArray());
 
         var plainV12 = io.github.mrtyldr.datev.plain.DatevFile.legacyV12(validator);
-        var univocityV12 = io.github.mrtyldr.datev.univocity.DatevFile.legacyV12(validator);
+        var advancedV12 = io.github.mrtyldr.datev.advanced.DatevFile.withHeader(
+                io.github.mrtyldr.datev.core.DatevHeader.legacyV12());
         plainV12.append(validRequiredValues());
-        univocityV12.append(validRequiredValues());
-        assertArrayEquals(plainV12.toByteArray(), univocityV12.toByteArray());
+        advancedV12.append(validRequiredValues());
+        assertArrayEquals(plainV12.toByteArray(), advancedV12.toByteArray());
     }
 
     private static Map<String, Object> validRequiredValues() {

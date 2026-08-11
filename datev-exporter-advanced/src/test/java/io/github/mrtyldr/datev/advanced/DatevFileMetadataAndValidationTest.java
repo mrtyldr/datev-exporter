@@ -1,10 +1,11 @@
 package io.github.mrtyldr.datev.advanced;
 
+import io.github.mrtyldr.datev.core.DatevHeader;
+import io.github.mrtyldr.datev.core.DatevMetadata;
 import io.github.mrtyldr.datev.core.DatevValidationError;
 import io.github.mrtyldr.datev.core.DatevValidationException;
 import io.github.mrtyldr.datev.core.DatevValidationMode;
 
-import com.univocity.parsers.csv.CsvWriter;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -80,21 +81,6 @@ class DatevFileMetadataAndValidationTest {
                 .build());
     }
 
-    @Test
-    void arbitraryCsvWriterCannotSilentlyDropMetadata() {
-        DatevFile file = DatevFile.withDefaults(metadata());
-        file.append(validBooking());
-        var completeOutput = new java.io.StringWriter();
-        CsvWriter completeWriter = file.newCsvWriter(completeOutput);
-
-        assertThrows(IllegalStateException.class, () -> file.writeTo(completeWriter));
-        assertEquals("", completeOutput.toString());
-
-        var dataOutput = new java.io.StringWriter();
-        file.writeDataTo(file.newCsvWriter(dataOutput));
-        assertFalse(dataOutput.toString().startsWith("\"EXTF\""));
-        assertTrue(dataOutput.toString().contains("12,50;\"S\""));
-    }
 
     @Test
     void officialSchemasDefaultToStrictAndRejectRowsAtomically() {
@@ -161,7 +147,7 @@ class DatevFileMetadataAndValidationTest {
                 "Belegdatum", "1008"
         )));
 
-        assertEquals("1000", file.rows().get(0).get(file.header().resolve("Sachkonto")));
+        assertEquals("1000", file.rows().get(0).get(file.header().indexOf("Sachkonto")));
         assertEquals(1, file.rowCount());
     }
 

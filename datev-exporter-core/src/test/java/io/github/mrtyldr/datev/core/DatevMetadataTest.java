@@ -1,4 +1,4 @@
-package io.github.mrtyldr.datev.advanced;
+package io.github.mrtyldr.datev.core;
 
 import org.junit.jupiter.api.Test;
 

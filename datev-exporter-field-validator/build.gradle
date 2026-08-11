@@ -12,5 +12,5 @@ dependencies {
     api project(':datev-exporter-core')
 
     testImplementation project(':datev-exporter-plain')
-    testImplementation project(':datev-exporter-univocity')
+    testImplementation project(':datev-exporter-advanced')
 }

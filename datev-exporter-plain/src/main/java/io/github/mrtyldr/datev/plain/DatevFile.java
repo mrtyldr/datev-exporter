@@ -1,6 +1,8 @@
 package io.github.mrtyldr.datev.plain;
 
 import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevCsv;
+import io.github.mrtyldr.datev.core.DatevMetadata;
 import io.github.mrtyldr.datev.core.DatevSchema;
 
 import java.io.ByteArrayOutputStream;
@@ -30,6 +32,9 @@ import java.util.function.BiConsumer;
  * version and an immutable, aligned row without linking either side to an implementation-specific
  * validator type. Instances are mutable and not thread-safe. Use {@link DatevStreamWriter} when
  * booking rows should be written once without being retained.
+ *
+ * <p>Attach a {@link DatevMetadata} through {@link #builder()} to emit the mandatory EXTF
+ * management record and produce a complete, importable Buchungsstapel file.
  */
 public final class DatevFile implements Iterable<List<String>> {
 
@@ -47,12 +52,37 @@ public final class DatevFile implements Iterable<List<String>> {
 
     private final DatevSchema schema;
     private final DatevRowAssembler rowAssembler;
+    private final DatevMetadata metadata;
     private final List<List<String>> rows = new ArrayList<>();
     private boolean appending;
 
-    private DatevFile(DatevSchema schema, BiConsumer<Integer, List<String>> validator) {
+    private DatevFile(
+            DatevSchema schema,
+            BiConsumer<Integer, List<String>> validator,
+            DatevMetadata metadata
+    ) {
         this.schema = Objects.requireNonNull(schema, "schema");
         this.rowAssembler = new DatevRowAssembler(schema, validator);
+        this.metadata = metadata;
+    }
+
+    /**
+     * Creates a builder for the current v13 schema.
+     *
+     * @return a new builder
+     */
+    public static Builder builder() {
+        return new Builder(DatevSchema.current());
+    }
+
+    /**
+     * Creates a builder for an explicit fixed schema.
+     *
+     * @param schema the fixed schema to use
+     * @return a new builder
+     */
+    public static Builder builder(DatevSchema schema) {
+        return new Builder(Objects.requireNonNull(schema, "schema"));
     }
 
     /**
@@ -100,7 +130,7 @@ public final class DatevFile implements Iterable<List<String>> {
      * @return a new file
      */
     public static DatevFile forSchema(DatevSchema schema) {
-        return new DatevFile(schema, null);
+        return new DatevFile(schema, null, null);
     }
 
     /**
@@ -114,7 +144,7 @@ public final class DatevFile implements Iterable<List<String>> {
             DatevSchema schema,
             BiConsumer<Integer, List<String>> validator
     ) {
-        return new DatevFile(schema, Objects.requireNonNull(validator, "validator"));
+        return new DatevFile(schema, Objects.requireNonNull(validator, "validator"), null);
     }
 
     /**
@@ -151,6 +181,27 @@ public final class DatevFile implements Iterable<List<String>> {
      */
     public Optional<BiConsumer<Integer, List<String>>> validator() {
         return Optional.ofNullable(rowAssembler.validator());
+    }
+
+    /**
+     * Returns the configured EXTF management record, if any.
+     *
+     * @return the configured metadata
+     */
+    public Optional<DatevMetadata> metadata() {
+        return Optional.ofNullable(metadata);
+    }
+
+    /**
+     * Returns whether output contains the mandatory EXTF management record.
+     *
+     * <p>Without metadata this file emits only the heading and booking records, which is not a
+     * complete DATEV-Format file.
+     *
+     * @return {@code true} if metadata is configured
+     */
+    public boolean isCompleteExtf() {
+        return metadata != null;
     }
 
     /**
@@ -315,9 +366,13 @@ public final class DatevFile implements Iterable<List<String>> {
     public void writeTo(Writer output) {
         Objects.requireNonNull(output, "output");
         try {
-            output.write(DatevCsvEncoder.encodeHeader(schema));
+            if (metadata != null) {
+                output.write(metadata.toCsvLine());
+                output.write(DatevCsv.LINE_SEPARATOR);
+            }
+            output.write(DatevCsv.encodeRecord(schema.headers(), DatevCsv.QUOTE_NONE));
             for (List<String> row : rows) {
-                output.write(DatevCsvEncoder.encodeRow(schema, row));
+                output.write(DatevCsv.encodeRecord(row, schema::isTextColumn));
             }
             output.flush();
         } catch (IOException exception) {
@@ -352,9 +407,12 @@ public final class DatevFile implements Iterable<List<String>> {
      */
     public String toCsvString() {
         StringBuilder csv = new StringBuilder(estimateOutputCapacity());
-        DatevCsvEncoder.appendHeader(csv, schema);
+        if (metadata != null) {
+            csv.append(metadata.toCsvLine()).append(DatevCsv.LINE_SEPARATOR);
+        }
+        DatevCsv.appendRecord(csv, schema.headers(), DatevCsv.QUOTE_NONE);
         for (List<String> row : rows) {
-            DatevCsvEncoder.appendRow(csv, schema, row);
+            DatevCsv.appendRecord(csv, row, schema::isTextColumn);
         }
         return csv.toString();
     }
@@ -386,6 +444,63 @@ public final class DatevFile implements Iterable<List<String>> {
 
     private int estimateOutputCapacity() {
         return Math.max(256, schema.columnCount() * (rows.size() + 1) * 4);
+    }
+
+    /**
+     * Configures a fixed-schema file, including the optional EXTF management record.
+     *
+     * <p>The static factories cover the common cases; this builder exists so schema, validator and
+     * metadata can be combined without a factory per combination. Instances are not thread-safe.
+     */
+    public static final class Builder {
+        private final DatevSchema schema;
+        private BiConsumer<Integer, List<String>> validator;
+        private DatevMetadata metadata;
+
+        private Builder(DatevSchema schema) {
+            this.schema = schema;
+        }
+
+        /**
+         * Sets the optional row validator.
+         *
+         * @param validator receives the format version and each immutable aligned row
+         * @return this builder
+         */
+        public Builder validator(BiConsumer<Integer, List<String>> validator) {
+            this.validator = Objects.requireNonNull(validator, "validator");
+            return this;
+        }
+
+        /**
+         * Sets the EXTF management record written before the heading.
+         *
+         * <p>The metadata's format version must match this builder's schema, so a complete file
+         * cannot silently declare a version it does not contain.
+         *
+         * @param metadata the management record
+         * @return this builder
+         * @throws IllegalArgumentException if the metadata's format version differs from the schema
+         */
+        public Builder metadata(DatevMetadata metadata) {
+            Objects.requireNonNull(metadata, "metadata");
+            if (metadata.formatVersion() != schema.formatVersion()) {
+                throw new IllegalArgumentException("DATEV metadata declares format version "
+                        + metadata.formatVersion() + " but the schema is version "
+                        + schema.formatVersion() + '.');
+            }
+            this.metadata = metadata;
+            return this;
+        }
+
+        /**
+         * Creates the configured file.
+         *
+         * @return a new file
+         */
+        public DatevFile build() {
+            return new DatevFile(schema, validator, metadata);
+        }
     }
 
     @FunctionalInterface

@@ -3,14 +3,15 @@ plugins {
     id 'datev.publish-conventions'
 }
 
-description = 'A Java library for creating validated DATEV Buchungsstapel v13 CSV files.'
-ext.datevModuleName = 'io.github.mrtyldr.datev.advanced'
+description = 'Univocity interoperability for the advanced DATEV Buchungsstapel exporter.'
+ext.datevModuleName = 'io.github.mrtyldr.datev.advanced.univocity'
 
 dependencies {
     testImplementation testFixtures(project(':datev-exporter-core'))
 
-    api project(':datev-exporter-core')
+    api project(':datev-exporter-advanced')
 
+    api 'com.univocity:univocity-parsers:2.9.1'
 
     testImplementation project(':datev-exporter-plain')
     testImplementation project(':datev-exporter-field-validator')

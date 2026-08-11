@@ -1,4 +1,4 @@
-package io.github.mrtyldr.datev.advanced;
+package io.github.mrtyldr.datev.core;
 
 import org.junit.jupiter.api.Test;
 
@@ -120,9 +120,9 @@ class DatevHeaderTest {
         List<String> reversedOrder = new ArrayList<>(renamed.keys());
         java.util.Collections.reverse(reversedOrder);
         DatevHeader reversed = renamed.reordered(reversedOrder);
-        Set<Integer> actual = Arrays.stream(DatevHeader.current().quotedIndexes()).collect(Collectors.toSet());
-        Set<Integer> legacy = Arrays.stream(DatevHeader.legacyV12().quotedIndexes()).collect(Collectors.toSet());
-        Set<Integer> reversedIndexes = Arrays.stream(reversed.quotedIndexes()).collect(Collectors.toSet());
+        Set<Integer> actual = Set.copyOf(DatevHeader.current().quotedColumnIndexes());
+        Set<Integer> legacy = Set.copyOf(DatevHeader.legacyV12().quotedColumnIndexes());
+        Set<Integer> reversedIndexes = Set.copyOf(reversed.quotedColumnIndexes());
         Set<Integer> expectedReversed = expected.stream()
                 .map(index -> DatevHeader.current().size() - 1 - index)
                 .collect(Collectors.toSet());
@@ -132,7 +132,7 @@ class DatevHeaderTest {
                 () -> assertEquals(expected, legacy),
                 () -> assertEquals(expectedReversed, reversedIndexes),
                 () -> assertEquals("Side", renamed.names().get(1)),
-                () -> assertEquals(0, DatevHeader.parse("A;B").quotedIndexes().length)
+                () -> assertEquals(0, DatevHeader.parse("A;B").quotedColumnIndexes().size())
         );
     }
 
@@ -162,15 +162,13 @@ class DatevHeaderTest {
     @Test
     void returnedCollectionsAndArraysCannotMutateAHeaderOrGlobalDefaults() {
         DatevHeader custom = DatevHeader.parse("A;B");
-        String[] exportedNames = custom.namesArray();
-        exportedNames[0] = "Changed";
-        DatevHeader renamed = DatevHeader.current().renamed("Konto", "Sachkonto");
+                DatevHeader renamed = DatevHeader.current().renamed("Konto", "Sachkonto");
 
         assertAll(
                 () -> assertThrows(UnsupportedOperationException.class, () -> custom.names().add("C")),
                 () -> assertThrows(UnsupportedOperationException.class, () -> custom.keys().set(0, "C")),
                 () -> assertEquals(List.of("A", "B"), custom.names()),
-                () -> assertEquals("A", custom.namesArray()[0]),
+                () -> assertEquals("A", custom.names().get(0)),
                 () -> assertEquals("Konto", DatevHeader.current().names().get(6)),
                 () -> assertEquals("Sachkonto", renamed.names().get(6)),
                 () -> assertNotEquals(DatevHeader.current(), renamed)

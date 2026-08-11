@@ -2,7 +2,6 @@ package io.github.mrtyldr.datev.advanced;
 
 import io.github.mrtyldr.datev.core.DatevValidationMode;
 
-import com.univocity.parsers.csv.CsvWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -34,45 +33,8 @@ class DatevFileWriterTest {
         );
     }
 
-    @Test
-    void configuredCsvWriterConsumesDatevFileDirectly() {
-        DatevFile file = DatevFile.withHeader("A;B");
-        file.append(new String[]{"1", "2"});
-        StringWriter output = new StringWriter();
-        CsvWriter writer = new CsvWriter(output, file.csvWriterSettings());
 
-        writer.writeRows(file);
-        writer.flush();
 
-        assertEquals("A;B\r\n1;2\r\n", output.toString());
-    }
-
-    @Test
-    void explicitHeaderFollowedByDirectRowsDoesNotDuplicateHeader() {
-        DatevFile file = DatevFile.withHeader("A;B");
-        file.append(new String[]{"1", "2"});
-        StringWriter output = new StringWriter();
-        CsvWriter writer = file.newCsvWriter(output);
-
-        writer.writeHeaders();
-        writer.writeRows(file);
-        writer.flush();
-
-        assertEquals("A;B\r\n1;2\r\n", output.toString());
-    }
-
-    @Test
-    void directEmptyIterableNeedsExplicitHeaderButConvenienceMethodWritesIt() {
-        DatevFile file = DatevFile.withHeader("A;B");
-        StringWriter directOutput = new StringWriter();
-        CsvWriter directWriter = file.newCsvWriter(directOutput);
-
-        directWriter.writeRows(file);
-        directWriter.flush();
-
-        assertEquals("", directOutput.toString());
-        assertEquals("A;B\r\n", file.toCsvString());
-    }
 
     @Test
     void defaultSchemaSelectivelyQuotesDatevTextFields() {
@@ -128,19 +90,6 @@ class DatevFileWriterTest {
         assertEquals("Text;Number\r\nplain;1000\r\n", file.toCsvString());
     }
 
-    @Test
-    void callerCanSafelyCustomizeQuotingForCustomSchema() {
-        DatevFile file = DatevFile.withHeader("Text;Number");
-        file.append(new String[]{"plain", "1000"});
-        var settings = file.csvWriterSettings();
-        settings.quoteFields("Text");
-        StringWriter output = new StringWriter();
-        CsvWriter writer = file.newCsvWriter(output, settings);
-
-        file.writeTo(writer);
-
-        assertEquals("\"Text\";Number\r\n\"plain\";1000\r\n", output.toString());
-    }
 
     @Test
     void convenienceWriterIncludesTheHeaderForAnEmptyFile() {

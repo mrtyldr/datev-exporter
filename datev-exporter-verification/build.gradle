@@ -23,9 +23,14 @@ dependencies {
     testImplementation testFixtures(project(':datev-exporter-core'))
 
     testImplementation project(':datev-exporter-plain')
-    testImplementation project(':datev-exporter-univocity')
     testImplementation project(':datev-exporter-advanced')
     testImplementation project(':datev-exporter-field-validator')
+}
+
+// The opt-in checker sources are not run by `check`, but they must still compile against the
+// current API. Without this they only break during a release, when `datevCheckerTest` first runs.
+tasks.named('check') {
+    dependsOn tasks.named('datevCheckerTestClasses')
 }
 
 def datevCheckerVersion = '2.2.3.0'
