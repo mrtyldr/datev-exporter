@@ -55,6 +55,36 @@ jobs:
           fi
           echo "RELEASE_VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
 
+      # An empty or misnamed secret reaches Gradle as an empty string, where it surfaces as an
+      # opaque "Could not read PGP secret key / tag 0xffffffff" stack trace after the full build
+      # has already run. Fail here instead, before anything expensive and before any upload.
+      - name: Verify publishing credentials
+        shell: bash
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          missing=()
+          [[ -n "$MAVEN_CENTRAL_USERNAME" ]] || missing+=(MAVEN_CENTRAL_USERNAME)
+          [[ -n "$MAVEN_CENTRAL_PASSWORD" ]] || missing+=(MAVEN_CENTRAL_PASSWORD)
+          [[ -n "$SIGNING_KEY" ]] || missing+=(SIGNING_KEY)
+          [[ -n "$SIGNING_KEY_PASSWORD" ]] || missing+=(SIGNING_KEY_PASSWORD)
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::Empty or undefined secrets: ${missing[*]}. Check the names and that they are readable by the 'maven-central' environment."
+            exit 1
+          fi
+          if [[ "$SIGNING_KEY" != *"BEGIN PGP PRIVATE KEY BLOCK"* ]]; then
+            echo "::error::SIGNING_KEY does not contain an armored PGP private key block. Export it with: gpg --export-secret-keys --armor <KEYID>"
+            exit 1
+          fi
+          if [[ "$SIGNING_KEY" != *"END PGP PRIVATE KEY BLOCK"* ]]; then
+            echo "::error::SIGNING_KEY is truncated: the END PGP PRIVATE KEY BLOCK line is missing."
+            exit 1
+          fi
+          echo "Signing key looks well-formed (${#SIGNING_KEY} characters)."
+
       - name: Build and run deterministic tests
         run: ./gradlew --no-daemon clean check -PreleaseVersion="$RELEASE_VERSION"
 
