@@ -58,7 +58,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform('io.github.mrtyldr:datev-exporter:0.1.0')
+    implementation platform('io.github.mrtyldr:datev-exporter:0.1.1')
 
     // Fixed schemas, EXTF metadata and streaming; pulls in datev-exporter-core transitively:
     implementation 'io.github.mrtyldr:datev-exporter-plain'
@@ -82,7 +82,7 @@ Maven:
     <dependency>
       <groupId>io.github.mrtyldr</groupId>
       <artifactId>datev-exporter</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -98,7 +98,7 @@ Maven:
 ```
 
 Without the BOM, declare each module's version explicitly, for example
-`implementation 'io.github.mrtyldr:datev-exporter-plain:0.1.0'`.
+`implementation 'io.github.mrtyldr:datev-exporter-plain:0.1.1'`.
 
 ## Build and test
 

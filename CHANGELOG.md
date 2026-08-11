@@ -8,6 +8,10 @@ Until the first `1.0.0` release the public API may change between minor versions
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.1] - 2026-08-11
+
 ### Added
 
 - `DatevMetadata.bookingBatchV12()`, so the legacy 124-column schema can also carry an EXTF
