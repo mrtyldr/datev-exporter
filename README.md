@@ -1,5 +1,12 @@
 # datev-exporter
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mrtyldr/datev-exporter-plain?label=Maven%20Central)](https://central.sonatype.com/search?namespace=io.github.mrtyldr)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+
+> I wrote this because I have already spent enough of my life counting semicolons, and I would
+> rather you did not have to. The `plain` module is a copy of the exporter I built for my own
+> work. The other modules, the Javadoc and this README were produced with Opus 5 and GPT-5.6-Sol.
+
 `datev-exporter` is a Java 17 multi-module library for creating DATEV Buchungsstapel CSV files. All exporters use the current v13/125-column or legacy v12/124-column schema, semicolon delimiters and CRLF records; their byte-stream APIs emit Windows-1252. The implementation follows DATEV's [booking-batch](https://developer.datev.de/en/file-format/details/datev-format/format-description/booking-batch), [header](https://developer.datev.de/de/file-format/details/datev-format/format-description/header), [technical structure](https://developer.datev.de/en/file-format/details/datev-format/getting-started), and [character-set](https://developer.datev.de/de/file-format/details/datev-format/character-set) documentation.
 
 ## Choose an artifact
@@ -40,30 +47,18 @@ bytes the exporters would otherwise write; it only lets an existing Univocity pi
 - Java 17 or newer
 - Gradle Wrapper (included)
 
-## Build and test
+## Install
 
-```shell
-./gradlew clean build
-```
-
-The default build is deterministic and does not download or launch the external DATEV checker. See [Official DATEV checker compatibility](#official-datev-checker-compatibility) for the opt-in verification.
-
-The project is not claimed to be available from Maven Central until a release has actually completed. To try the current snapshot locally:
-
-```shell
-./gradlew publishToMavenLocal
-```
-
-`io.github.mrtyldr:datev-exporter` is a Bill of Materials, not a library. Import it once and then
-declare the modules without versions:
+Released to Maven Central. `io.github.mrtyldr:datev-exporter` is a Bill of Materials, not a
+library: import it once and then declare the modules without versions.
 
 ```groovy
 repositories {
-    mavenLocal()
+    mavenCentral()
 }
 
 dependencies {
-    implementation platform('io.github.mrtyldr:datev-exporter:0.1.0-SNAPSHOT')
+    implementation platform('io.github.mrtyldr:datev-exporter:0.1.0')
 
     // Fixed schemas, EXTF metadata and streaming; pulls in datev-exporter-core transitively:
     implementation 'io.github.mrtyldr:datev-exporter-plain'
@@ -79,8 +74,46 @@ dependencies {
 }
 ```
 
+Maven:
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>io.github.mrtyldr</groupId>
+      <artifactId>datev-exporter</artifactId>
+      <version>0.1.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <dependency>
+    <groupId>io.github.mrtyldr</groupId>
+    <artifactId>datev-exporter-plain</artifactId>
+  </dependency>
+</dependencies>
+```
+
 Without the BOM, declare each module's version explicitly, for example
-`implementation 'io.github.mrtyldr:datev-exporter-plain:0.1.0-SNAPSHOT'`.
+`implementation 'io.github.mrtyldr:datev-exporter-plain:0.1.0'`.
+
+## Build and test
+
+```shell
+./gradlew clean build
+```
+
+The default build is deterministic and does not download or launch the external DATEV checker. See [Official DATEV checker compatibility](#official-datev-checker-compatibility) for the opt-in verification.
+
+To try unreleased changes against a local project, install them into the local Maven repository
+and add `mavenLocal()` to that project's repositories:
+
+```shell
+./gradlew publishToMavenLocal
+```
 
 ## The plain fixed-schema exporter
 
@@ -491,7 +524,7 @@ An actual import into DATEV Rechnungswesen additionally requires a licensed, con
 
 ## Project status and compatibility
 
-This is an early, pre-release API. Validate generated files against the DATEV format version and import product used by your organization before relying on them in production.
+This is an early `0.x` release. The public API may still change between minor versions; see the [CHANGELOG](CHANGELOG.md) for what each version altered. Validate generated files against the DATEV format version and import product used by your organization before relying on them in production.
 
 DATEV is a trademark of DATEV eG. This independent project is not affiliated with, endorsed by, or sponsored by DATEV eG. The library does not provide tax, accounting or legal advice, and no compatibility or regulatory compliance is guaranteed.
 
