@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -93,6 +94,70 @@ public final class DatevMetadata {
         this.chartOfAccounts = builder.chartOfAccounts;
         this.industrySolutionId = builder.industrySolutionId;
         this.applicationInformation = builder.applicationInformation;
+    }
+
+    /**
+     * Compares every business-specific field. The fixed and reserved fields are identical for all
+     * instances and are therefore not part of the comparison.
+     *
+     * @param other the object to compare with
+     * @return {@code true} if the other object is a metadata record with equal fields
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof DatevMetadata metadata)) {
+            return false;
+        }
+        return advisorNumber == metadata.advisorNumber
+                && clientNumber == metadata.clientNumber
+                && accountLength == metadata.accountLength
+                && fixed == metadata.fixed
+                && Objects.equals(createdAt, metadata.createdAt)
+                && Objects.equals(origin, metadata.origin)
+                && Objects.equals(exportedBy, metadata.exportedBy)
+                && Objects.equals(importedBy, metadata.importedBy)
+                && Objects.equals(fiscalYearStart, metadata.fiscalYearStart)
+                && Objects.equals(periodStart, metadata.periodStart)
+                && Objects.equals(periodEnd, metadata.periodEnd)
+                && Objects.equals(description, metadata.description)
+                && Objects.equals(dictationCode, metadata.dictationCode)
+                && bookingType == metadata.bookingType
+                && accountingPurpose == metadata.accountingPurpose
+                && Objects.equals(currency, metadata.currency)
+                && Objects.equals(chartOfAccounts, metadata.chartOfAccounts)
+                && Objects.equals(industrySolutionId, metadata.industrySolutionId)
+                && Objects.equals(applicationInformation, metadata.applicationInformation);
+    }
+
+    /**
+     * Returns a hash code consistent with {@link #equals(Object)}.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(createdAt, origin, exportedBy, importedBy, advisorNumber, clientNumber,
+                fiscalYearStart, accountLength, periodStart, periodEnd, description, dictationCode,
+                bookingType, accountingPurpose, fixed, currency, chartOfAccounts,
+                industrySolutionId, applicationInformation);
+    }
+
+    /**
+     * Returns a diagnostic description identifying the client and period.
+     *
+     * <p>This is deliberately short. Use {@link #toCsvLine()} for the complete record.
+     *
+     * @return the advisor, client, period and fixed flag
+     */
+    @Override
+    public String toString() {
+        return "DatevMetadata[advisor=" + advisorNumber
+                + ", client=" + clientNumber
+                + ", period=" + periodStart + ".." + periodEnd
+                + ", fixed=" + fixed + ']';
     }
 
     /**

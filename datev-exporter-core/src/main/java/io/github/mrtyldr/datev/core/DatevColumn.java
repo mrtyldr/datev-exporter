@@ -18,6 +18,14 @@ import java.util.function.Function;
  * {@code DatevColumn.of(DatevField.ACCOUNT, 1200L)} are interchangeable. Passing an untyped
  * {@code null} to a two-argument factory is ambiguous and must be cast to the intended overload.
  *
+ * <p>The record's generated {@code equals} compares the {@code formatter} by identity, because
+ * {@link Function} does not define value equality. Two columns carrying separately written lambdas
+ * are therefore never equal, even with equal headers and values. Columns from the built-in
+ * formatted factories — {@link #amount}, {@link #account}, {@link #date}, {@link #documentDate} —
+ * do compare equal in practice, because a non-capturing method reference is normally reused, but
+ * the JVM does not guarantee that. Do not rely on either outcome: compare {@link #header()} and
+ * {@link #formattedValue()} when the serialized result is what matters.
+ *
  * @param header exact heading from {@link DatevSchema#headers()}
  * @param value the value; {@code null} represents an empty cell
  * @param formatter optional converter for non-null values

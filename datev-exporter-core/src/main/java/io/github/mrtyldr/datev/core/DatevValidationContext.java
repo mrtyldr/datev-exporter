@@ -81,6 +81,52 @@ public final class DatevValidationContext {
         return Optional.ofNullable(periodEnd);
     }
 
+    /**
+     * Compares every configured constraint.
+     *
+     * @param other the object to compare with
+     * @return {@code true} if the other object is a context with equal constraints
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof DatevValidationContext context)) {
+            return false;
+        }
+        return Objects.equals(accountLength, context.accountLength)
+                && Objects.equals(fiscalYearStart, context.fiscalYearStart)
+                && Objects.equals(periodStart, context.periodStart)
+                && Objects.equals(periodEnd, context.periodEnd);
+    }
+
+    /**
+     * Returns a hash code consistent with {@link #equals(Object)}.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountLength, fiscalYearStart, periodStart, periodEnd);
+    }
+
+    /**
+     * Returns a diagnostic description of the configured constraints.
+     *
+     * @return the constraints, or {@code DatevValidationContext[empty]}
+     */
+    @Override
+    public String toString() {
+        if (accountLength == null && fiscalYearStart == null
+                && periodStart == null && periodEnd == null) {
+            return "DatevValidationContext[empty]";
+        }
+        return "DatevValidationContext[accountLength=" + accountLength
+                + ", fiscalYearStart=" + fiscalYearStart
+                + ", period=" + periodStart + ".." + periodEnd + ']';
+    }
+
     Integer nullableAccountLength() {
         return accountLength;
     }

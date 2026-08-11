@@ -32,6 +32,43 @@ public final class DatevValidator implements BiConsumer<Integer, List<String>> {
     }
 
     /**
+     * Compares the configured mode and context.
+     *
+     * @param other the object to compare with
+     * @return {@code true} if the other object is a validator with equal configuration
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof DatevValidator validator)) {
+            return false;
+        }
+        return mode == validator.mode && Objects.equals(context, validator.context);
+    }
+
+    /**
+     * Returns a hash code consistent with {@link #equals(Object)}.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(mode, context);
+    }
+
+    /**
+     * Returns a diagnostic description of this validator's configuration.
+     *
+     * @return the mode and context
+     */
+    @Override
+    public String toString() {
+        return "DatevValidator[mode=" + mode + ", context=" + context + ']';
+    }
+
+    /**
      * Creates a strict validator without metadata-dependent constraints.
      *
      * @return strict validator

@@ -63,7 +63,7 @@ repositories {
 }
 
 dependencies {
-    implementation platform('io.github.mrtyldr:datev-exporter:0.2.0-SNAPSHOT')
+    implementation platform('io.github.mrtyldr:datev-exporter:0.1.0-SNAPSHOT')
 
     // Fixed schemas, EXTF metadata and streaming; pulls in datev-exporter-core transitively:
     implementation 'io.github.mrtyldr:datev-exporter-plain'
@@ -80,7 +80,7 @@ dependencies {
 ```
 
 Without the BOM, declare each module's version explicitly, for example
-`implementation 'io.github.mrtyldr:datev-exporter-plain:0.2.0-SNAPSHOT'`.
+`implementation 'io.github.mrtyldr:datev-exporter-plain:0.1.0-SNAPSHOT'`.
 
 ## The plain fixed-schema exporter
 
