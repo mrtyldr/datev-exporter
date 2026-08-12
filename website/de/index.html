@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>datev-exporter — DATEV-Buchungsstapel / EXTF für Java</title>
+    <meta name="description" content="DATEV-Buchungsstapel / EXTF für v13 und v12 mit einer fokussierten Java-17-Bibliothek erzeugen, validieren und streamen.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="datev-exporter — EXTF-Ausgabe für Java">
+    <meta property="og:description" content="Feste v13/v12-Schemata, typisierte Metadaten, technische Validierung und Forward-only-Streaming.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareSourceCode",
+      "name": "datev-exporter",
+      "version": "0.2.0",
+      "description": "Java-17-Bibliothek zum Erzeugen, Validieren und Streamen von DATEV-Buchungsstapel-/EXTF-Importkandidaten in v13 und v12.",
+      "codeRepository": "https://github.com/mrtyldr/datev-exporter",
+      "url": "https://mrtyldr.github.io/datev-exporter/de/",
+      "downloadUrl": "https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter",
+      "programmingLanguage": "Java",
+      "runtimePlatform": "Java 17 oder neuer",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./" aria-current="page">Überblick</a>
+            <a href="getting-started.html">Einstieg</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../en/" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <section class="hero">
+        <div class="shell hero-grid">
+            <div>
+                <p class="eyebrow">Java 17 · Apache-2.0 · Release 0.2.0</p>
+                <h1>Buchungsdaten besitzen. Formatschicht wiederverwenden.</h1>
+                <p class="lede">Bereits zugeordnete Buchungsdaten werden zu deterministischen DATEV-Buchungsstapel-/EXTF-Dateien – mit festen v13/v12-Schemata, typisierten Metadaten, technischer Validierung und Forward-only-Streaming.</p>
+                <div class="chips" aria-label="Projekteigenschaften">
+                    <span class="version-chip">v13 · 125 Spalten</span>
+                    <span class="version-chip">v12 · 124 Spalten</span>
+                    <span class="version-chip">Windows-1252 · CRLF</span>
+                    <span class="version-chip">Plain-Runtime · nur JDK</span>
+                </div>
+                <div class="actions">
+                    <a class="button" href="getting-started.html">Ersten Export erstellen</a>
+                    <a class="button secondary" href="compatibility.html">Nachweise prüfen</a>
+                </div>
+            </div>
+            <aside class="hero-aside" aria-label="Produktabgrenzung">
+                <p class="card-kicker">Der Vertrag</p>
+                <h2>Formatexporter, keine Buchhaltungslogik.</h2>
+                <p>Die Anwendung liefert zugeordnete Konten, Beträge, Daten und fachliche Entscheidungen. Die Bibliothek liefert den EXTF-Verwaltungssatz, die offizielle Spaltenreihenfolge, CSV-Kodierung und deterministische technische Prüfungen.</p>
+                <p><a href="compatibility.html#limits">Exakte Grenzen nachlesen →</a></p>
+            </aside>
+        </div>
+    </section>
+
+    <section class="section tint" aria-labelledby="problem-title">
+        <div class="shell">
+            <div class="section-heading">
+                <p class="eyebrow">Warum es die Bibliothek gibt</p>
+                <h2 id="problem-title">Die Schwierigkeit ist nicht, Werte mit Semikolons zu verbinden.</h2>
+                <p>Ein vollständiger Buchungsstapel kombiniert einen anders aufgebauten Verwaltungssatz, eine exakte versionsgebundene Überschrift und streng formatierte Buchungszeilen. Schon kleine Abweichungen bei Breite, Reihenfolge, Maskierung, Zeilenenden oder Kodierung können einen ansonsten gültigen Export unbrauchbar machen.</p>
+            </div>
+            <div class="grid-3">
+                <article class="card">
+                    <span class="card-number">01</span>
+                    <h3>Schema kanonisch halten</h3>
+                    <p>Eine geordnete Definition für alle 125 v13-Felder und die 124 Felder der älteren v12-Struktur verwenden – statt eigene Tabellen oder Arrays zu pflegen.</p>
+                </article>
+                <article class="card">
+                    <span class="card-number">02</span>
+                    <h3>Vor der Byte-Abweichung scheitern</h3>
+                    <p>Strukturelle, Windows-1252- und optionale semantische Verstöße ablehnen, bevor eine Buchungszeile an das Ziel übergeben wird.</p>
+                </article>
+                <article class="card">
+                    <span class="card-number">03</span>
+                    <h3>Speichermodell auswählen</h3>
+                    <p>Zeilen behalten, wenn sie geprüft oder erneut ausgegeben werden müssen; sie einmalig vorwärts streamen, wenn das Exportvolumen keine Speicherung rechtfertigt.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-labelledby="shape-title">
+        <div class="shell">
+            <div class="section-heading">
+                <p class="eyebrow">Lieferumfang</p>
+                <h2 id="shape-title">Eine schmale API für einen präzisen Ausgabevertrag.</h2>
+                <p>Der Standardpfad bleibt abhängigkeitsarm. Optionale Module sind explizit – eine Univocity-Abhängigkeit oder der semantische Validator kommt nur hinzu, wenn er gewählt wird.</p>
+            </div>
+            <div class="metrics" aria-label="Technischer Umfang">
+                <div class="metric"><span class="metric-value">2</span><span class="metric-label">feste Schemaversionen</span></div>
+                <div class="metric"><span class="metric-value">99.999</span><span class="metric-label">maximale Buchungszeilen pro Datei</span></div>
+                <div class="metric"><span class="metric-value">0</span><span class="metric-label">Drittanbieter-Runtime-Abhängigkeiten in Plain + Advanced</span></div>
+                <div class="metric"><span class="metric-value">3</span><span class="metric-label">Sätze: Verwaltung, Überschrift, Buchungen</span></div>
+            </div>
+            <div class="grid-3" style="margin-top: 1rem">
+                <article class="card recommended">
+                    <p class="card-kicker">Empfohlener Standard</p>
+                    <h3>Plain-Exporter mit festem Schema</h3>
+                    <p>Vollständige v13/v12-EXTF-Ausgabe, speichernde <code>DatevFile</code> und der Forward-only-<code>DatevStreamWriter</code>. Die richtige Wahl, solange der Empfängervertrag nicht bewusst von der offiziellen Überschrift abweicht.</p>
+                    <p><a href="getting-started.html">Mit Plain beginnen →</a></p>
+                </article>
+                <article class="card">
+                    <p class="card-kicker">Individuelles Folgeformat</p>
+                    <h3>Advanced-Exporter</h3>
+                    <p>Überschriften umbenennen, umordnen oder ersetzen und den Validierungsmodus je Datei wählen. Individuelle Überschriften sind nicht mit EXTF-Metadaten kombinierbar, weil sie nicht mehr dem festen DATEV-Schema entsprechen.</p>
+                    <p><a href="reference.html#exporters">Exporter vergleichen →</a></p>
+                </article>
+                <article class="card">
+                    <p class="card-kicker">Nur für vorhandene Pipeline</p>
+                    <h3>Univocity-Adapter</h3>
+                    <p>Überschrift und Buchungszeilen über einen vorhandenen Univocity-<code>CsvWriter</code> ausgeben. Er kann den anders geformten Verwaltungssatz nicht erzeugen und maskiert offizielle Textüberschriften abweichend.</p>
+                    <p><a href="reference.html#univocity">Grenze verstehen →</a></p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section tint" aria-labelledby="workflow-title">
+        <div class="shell">
+            <div class="section-heading">
+                <p class="eyebrow">Bewusste Abgrenzung</p>
+                <h2 id="workflow-title">Fachliche Daten hinein. Importkandidat heraus.</h2>
+            </div>
+            <div class="grid-3">
+                <article class="card">
+                    <span class="card-number">1</span>
+                    <h3>In der Anwendung zuordnen</h3>
+                    <p>Kontenrahmen, Steuerbehandlung, Stammdaten und mandantenspezifische Regeln vor dem Aufruf des Exporters bestimmen.</p>
+                </article>
+                <article class="card">
+                    <span class="card-number">2</span>
+                    <h3>Zusammenstellen und prüfen</h3>
+                    <p>Typisierte Metadaten anhängen, benannte oder typisierte Spalten schreiben und metadatenbezogene technische Validierung auswählen.</p>
+                </article>
+                <article class="card">
+                    <span class="card-number">3</span>
+                    <h3>Im Zielsystem verifizieren</h3>
+                    <p>Die erzeugte Datei über den kontrollierten Übertragungsweg bewegen und die Annahme in der lizenzierten, konfigurierten DATEV-Zielumgebung prüfen.</p>
+                </article>
+            </div>
+            <div class="callout warning">
+                <strong>Keine Importgarantie</strong>
+                <p>Eine bestandene Bibliotheksvalidierung – oder die Übereinstimmung mit dem geprüften v13-Schema- und Beispielvertrag – beweist weder die buchhalterische Richtigkeit noch die Annahme durch ein bestimmtes DATEV-Produkt, einen Mandanten oder dessen Konfiguration.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-labelledby="proof-title">
+        <div class="shell grid-2">
+            <div>
+                <p class="eyebrow">Nachweise statt Adjektive</p>
+                <h2 id="proof-title">Kompatibilitätsaussagen sind abgestuft.</h2>
+                <p>Für v13 fixiert ein optionaler Vertragstest das offizielle DATEV-Prüfprogrammschema und das offizielle Beispielarchiv, vergleicht die 125 Felddefinitionen und validiert alle 54 Beispielbuchungen. Er macht aus dem Start einer Windows-GUI kein bestandenes oder fehlgeschlagenes Importergebnis.</p>
+                <p>Für v12 unterstützt die Bibliothek das Präfix mit 124 Spalten und den passenden Verwaltungssatz. Aktuell fehlt jedoch ein unabhängiges offizielles v12-Testobjekt oder ein dokumentierter realer Importnachweis.</p>
+                <p><a class="button" href="compatibility.html">Kompatibilitätsmatrix öffnen</a></p>
+            </div>
+            <aside class="card">
+                <p class="card-kicker">Weiterlesen</p>
+                <h3>Nachweise auf der richtigen Ebene nutzen</h3>
+                <ul>
+                    <li><a href="getting-started.html#complete-file">Vollständiges v13-Beispiel</a></li>
+                    <li><a href="compatibility.html#version-matrix">v12/v13-Nachweismatrix</a></li>
+                    <li><a href="reference.html#validation">Validierungsebenen</a></li>
+                    <li><a href="benchmarks.html">Reproduzierbare Benchmarks</a></li>
+                    <li><a href="/datev-exporter/api/0.2.0/">Versionierte Java-API</a></li>
+                </ul>
+            </aside>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter">Maven Central</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

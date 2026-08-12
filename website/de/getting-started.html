@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erste Schritte — datev-exporter</title>
+    <meta name="description" content="datev-exporter mit Gradle oder Maven installieren, eine vollständige v13-EXTF-Datei erstellen und große DATEV-Buchungsstapel gepuffert streamen.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Erste Schritte — datev-exporter">
+    <meta property="og:description" content="Mit Gradle oder Maven installieren, eine vollständige v13-EXTF-Datei erstellen und große Exporte streamen.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/getting-started.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/getting-started.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./">Überblick</a>
+            <a href="getting-started.html" aria-current="page">Einstieg</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../en/getting-started.html" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Erste Schritte · 0.2.0</p>
+        <h1>Von zugeordneten Buchungen zur vollständigen EXTF-Datei.</h1>
+        <p class="lede">Mit dem Plain-Exporter für feste Schemata beginnen. Typisierte Metadaten und kontextbezogene Validierung ergänzen, dann je nach Lebenszyklus zwischen Speicherung und Forward-only-Ausgabe wählen.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="Auf dieser Seite">
+                <strong>Auf dieser Seite</strong>
+                <a href="#requirements">Voraussetzungen</a>
+                <a href="#gradle">Gradle</a>
+                <a href="#maven">Maven</a>
+                <a href="#complete-file">Vollständige v13-Datei</a>
+                <a href="#streaming">Gepuffertes Streaming</a>
+                <a href="#v12">Ältere v12</a>
+                <a href="#verify">Ergebnis prüfen</a>
+            </nav>
+
+            <article class="prose">
+                <section id="requirements">
+                    <p class="eyebrow">Schritt 0</p>
+                    <h2>Voraussetzungen und Modulauswahl</h2>
+                    <ul>
+                        <li>Java 17 oder neuer.</li>
+                        <li><code>datev-exporter-plain</code> für feste v13/v12-Schemata und Ausgabe.</li>
+                        <li><code>datev-exporter-field-validator</code>, wenn deterministische semantische Prüfungen vor der Annahme jeder Zeile ausgeführt werden sollen.</li>
+                    </ul>
+                    <p>Das Root-Artefakt <code>datev-exporter</code> ist eine Bill of Materials (BOM), kein Runtime-JAR. Es richtet die Modulversionen aus; anschließend werden nur die tatsächlich verwendeten Module eingebunden.</p>
+                    <div class="callout warning">
+                        <strong>Zugeordnete Buchhaltungsdaten bereitstellen</strong>
+                        <p>Die Beispiele verwenden Platzhalter für Berater-/Mandantennummern und Kontenzuordnungen. Alle fachlichen Werte müssen durch für das Zielsystem freigegebene Daten ersetzt werden; die Bibliothek ordnet weder SKR03/SKR04 zu noch bestimmt sie die Steuerbehandlung.</p>
+                    </div>
+                </section>
+
+                <section id="gradle">
+                    <p class="eyebrow">Schritt 1A</p>
+                    <h2>Mit Gradle ausführen</h2>
+                    <p>Eine Java-Anwendung anlegen, das Java-Beispiel unten als <code>src/main/java/Example.java</code> speichern und dieses <code>build.gradle</code> verwenden:</p>
+<pre><code>plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('io.github.mrtyldr:datev-exporter:0.2.0')
+    implementation 'io.github.mrtyldr:datev-exporter-plain'
+    implementation 'io.github.mrtyldr:datev-exporter-field-validator'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'Example'
+}</code></pre>
+                    <p>Mit dem Gradle Wrapper starten:</p>
+<pre><code>./gradlew run</code></pre>
+                    <p>Das Repository enthält außerdem eine deterministische, durch CI ausgeführte Anwendung:</p>
+<pre><code>git clone https://github.com/mrtyldr/datev-exporter.git
+cd datev-exporter
+./gradlew :examples:quickstart-gradle:run</code></pre>
+                </section>
+
+                <section id="maven">
+                    <p class="eyebrow">Schritt 1B</p>
+                    <h2>Mit Maven bauen</h2>
+                    <p>Dieselbe <code>Example.java</code> funktioniert mit diesem minimalen <code>pom.xml</code>. Die BOM verwaltet die Modulversionen:</p>
+<pre><code>&lt;project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;
+  &lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;
+  &lt;groupId&gt;example&lt;/groupId&gt;
+  &lt;artifactId&gt;datev-quickstart&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+
+  &lt;properties&gt;
+    &lt;maven.compiler.release&gt;17&lt;/maven.compiler.release&gt;
+    &lt;project.build.sourceEncoding&gt;UTF-8&lt;/project.build.sourceEncoding&gt;
+  &lt;/properties&gt;
+
+  &lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+      &lt;dependency&gt;
+        &lt;groupId&gt;io.github.mrtyldr&lt;/groupId&gt;
+        &lt;artifactId&gt;datev-exporter&lt;/artifactId&gt;
+        &lt;version&gt;0.2.0&lt;/version&gt;
+        &lt;type&gt;pom&lt;/type&gt;
+        &lt;scope&gt;import&lt;/scope&gt;
+      &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+  &lt;/dependencyManagement&gt;
+
+  &lt;dependencies&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;io.github.mrtyldr&lt;/groupId&gt;
+      &lt;artifactId&gt;datev-exporter-plain&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;io.github.mrtyldr&lt;/groupId&gt;
+      &lt;artifactId&gt;datev-exporter-field-validator&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+  &lt;/dependencies&gt;
+
+  &lt;build&gt;
+    &lt;plugins&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+        &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.15.0&lt;/version&gt;
+      &lt;/plugin&gt;
+      &lt;plugin&gt;
+        &lt;groupId&gt;org.codehaus.mojo&lt;/groupId&gt;
+        &lt;artifactId&gt;exec-maven-plugin&lt;/artifactId&gt;
+        &lt;version&gt;3.6.3&lt;/version&gt;
+        &lt;configuration&gt;
+          &lt;mainClass&gt;Example&lt;/mainClass&gt;
+        &lt;/configuration&gt;
+      &lt;/plugin&gt;
+    &lt;/plugins&gt;
+  &lt;/build&gt;
+&lt;/project&gt;</code></pre>
+                    <p>Kompilieren und ausführen:</p>
+<pre><code>mvn verify exec:java</code></pre>
+                </section>
+
+                <section id="complete-file">
+                    <p class="eyebrow">Schritt 2</p>
+                    <h2>Vollständige v13-Datei erstellen</h2>
+                    <p>Diese Anwendung schreibt alle drei notwendigen Satzebenen: EXTF-Verwaltungssatz, die exakte v13-Überschrift mit 125 Spalten und eine Buchungszeile. <code>DatevFile</code> behält angenommene Zeilen, damit sie geprüft oder erneut ausgegeben werden können.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevField;
+import io.github.mrtyldr.datev.core.DatevMetadata;
+import io.github.mrtyldr.datev.core.DatevValidationContext;
+import io.github.mrtyldr.datev.plain.DatevFile;
+import io.github.mrtyldr.datev.validation.DatevValidator;
+
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public final class Example {
+    public static void main(String[] args) throws Exception {
+        LocalDate fiscalStart = LocalDate.of(2026, 1, 1);
+        LocalDate periodStart = LocalDate.of(2026, 8, 1);
+        LocalDate periodEnd = LocalDate.of(2026, 8, 31);
+
+        DatevMetadata metadata = DatevMetadata.bookingBatchV13()
+                .createdAt(LocalDateTime.now())
+                .origin("RE")
+                .exportedBy("my_application")
+                .advisorNumber(1001)
+                .clientNumber(1)
+                .fiscalYearStart(fiscalStart)
+                .accountLength(4)
+                .period(periodStart, periodEnd)
+                .description("August 2026")
+                .applicationInformation("my-application")
+                .build();
+
+        DatevValidationContext context = DatevValidationContext.builder()
+                .accountLength(metadata.accountLength())
+                .fiscalYearStart(metadata.fiscalYearStart())
+                .period(metadata.periodStart(), metadata.periodEnd())
+                .build();
+        DatevValidator validator = DatevValidator.builder()
+                .context(context)
+                .build();
+
+        DatevFile file = DatevFile.builder()
+                .metadata(metadata)
+                .validator(validator)
+                .build();
+        file.append(
+                DatevColumn.amount(DatevField.AMOUNT,
+                        new BigDecimal("1250.00")),
+                DatevColumn.of(DatevField.DEBIT_CREDIT_FLAG, "S"),
+                DatevColumn.of(DatevField.CURRENCY, "EUR"),
+                DatevColumn.account(DatevField.ACCOUNT, 1000),
+                DatevColumn.account(DatevField.CONTRA_ACCOUNT, 8400),
+                DatevColumn.documentDate(LocalDate.of(2026, 8, 10)),
+                DatevColumn.of(DatevField.DOCUMENT_FIELD_1, "RE-42"),
+                DatevColumn.of(DatevField.POSTING_TEXT, "Rechnung 42")
+        );
+
+        try (OutputStream output = Files.newOutputStream(
+                Path.of("EXTF_Buchungsstapel.csv"))) {
+            file.writeTo(output);
+        }
+    }
+}</code></pre>
+                    <div class="callout tip">
+                        <strong>Warum <code>DatevField</code>?</strong>
+                        <p>Lesbare englische Konstanten tragen die exakten deutschen Ausgabeüberschriften. Ein falsch geschriebener Feldname wird zum Kompilierfehler, während die Ausgabe kanonisch bleibt.</p>
+                    </div>
+                </section>
+
+                <section id="streaming">
+                    <p class="eyebrow">Große Exporte</p>
+                    <h2>Über ein gepuffertes Ziel streamen</h2>
+                    <p><code>DatevStreamWriter</code> schreibt beim Erstellen Verwaltungssatz und Überschrift. Danach wird je <code>append</code> genau eine Buchungszeile vorbereitet und übergeben, ohne erfolgreiche Zeilen zu behalten. Ein ansonsten ungepuffertes Datei- oder Netzwerkziel in <code>BufferedOutputStream</code> einbetten, um kleine Betriebssystem-Schreibvorgänge zusammenzufassen.</p>
+<pre><code>import io.github.mrtyldr.datev.plain.DatevStreamWriter;
+
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+
+try (OutputStream file = Files.newOutputStream(
+             Path.of("EXTF_Buchungsstapel.csv"));
+     OutputStream output = new BufferedOutputStream(file);
+     DatevStreamWriter writer = DatevStreamWriter.builder()
+             .metadata(metadata)
+             .validator(validator)
+             .build(output)) {
+    for (Map&lt;String, ?&gt; row : bookingRows) {
+        writer.append(row);
+    }
+}</code></pre>
+                    <ul>
+                        <li>Die JDK-Standardpuffergröße ist ein sinnvoller Ausgangspunkt; Anpassungen nur auf Basis von Messungen.</li>
+                        <li>Keinen zusätzlichen Puffer um <code>ByteArrayOutputStream</code>, <code>StringWriter</code> oder ein bereits gepuffertes Ziel legen.</li>
+                        <li>Der Writer leert den Puffer, schließt aber das vom Aufrufer verwaltete Ziel nicht. Durch die letzte Deklaration wird zuerst der Writer und danach Puffer und Datei geschlossen.</li>
+                        <li>Ein Validierungsfehler verändert die bestehende Ausgabe nicht. Ein E/A-Fehler kann auftreten, nachdem das Ziel einen Teil der Zeile angenommen hat; ein physisches Rollback ist unmöglich und der Writer wird terminal.</li>
+                    </ul>
+                    <p>Der von der Bibliothek verwaltete Arbeitsspeicher folgt der gerade zusammengesetzten Zeile, nicht der Gesamtzahl. Validator oder Ziel – etwa <code>ByteArrayOutputStream</code> – können Daten trotzdem behalten. Für begrenzten Heap ist daher ein tatsächlich streamendes Ziel nötig.</p>
+                </section>
+
+                <section id="v12">
+                    <p class="eyebrow">Älterer Vertrag</p>
+                    <h2>v12 bewusst auswählen</h2>
+                    <p>Passende v12-Metadaten und das v12-Schema verwenden. Der Builder lehnt einen Verwaltungssatz ab, dessen Version nicht zur Überschrift mit 124 Spalten passt.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevSchema;
+
+DatevMetadata legacyMetadata = DatevMetadata.bookingBatchV12()
+        .createdAt(LocalDateTime.now())
+        .origin("RE")
+        .exportedBy("my_application")
+        .advisorNumber(1001)
+        .clientNumber(1)
+        .fiscalYearStart(fiscalStart)
+        .accountLength(4)
+        .period(periodStart, periodEnd)
+        .build();
+
+DatevFile legacy = DatevFile.builder(DatevSchema.LEGACY_V12)
+        .metadata(legacyMetadata)
+        .build();</code></pre>
+                    <div class="callout warning">
+                        <strong>Niedrigere Nachweisstufe für v12</strong>
+                        <p>v12 wird strukturell aus den ersten 124 v13-Feldern abgeleitet und durch Bibliothekstests abgedeckt. Release 0.2.0 besitzt weder ein unabhängig fixiertes offizielles v12-Testobjekt noch ein dokumentiertes Annahmeergebnis aus einem realen Zielsystem. Siehe <a href="compatibility.html#version-matrix">Versionsmatrix</a>.</p>
+                    </div>
+                </section>
+
+                <section id="verify">
+                    <p class="eyebrow">Letzter Schritt</p>
+                    <h2>Über die Bibliothek hinaus prüfen</h2>
+                    <ol class="steps">
+                        <li><h3>Zuordnung testen</h3><p>Freigegebene Konten, Steuerentscheidungen, Daten und Quellfeldzuordnungen in der Anwendung absichern.</p></li>
+                        <li><h3>Dateigrenze kontrollieren</h3><p>Erzeugte Bytes als Windows-1252 mit CRLF-Sätzen erhalten; kein späterer UTF-8-Textschritt darf sie umschreiben.</p></li>
+                        <li><h3>DATEV-Werkzeuge und reales Ziel nutzen</h3><p>Den passenden Prüfablauf und einen kontrollierten Import in der lizenzierten, konfigurierten Zielumgebung durchführen. Produkt/Version und Ergebnis als eigene Kompatibilitätsnachweise dokumentieren.</p></li>
+                    </ol>
+                    <p><a class="button" href="compatibility.html">Aussagen und Grenzen prüfen</a> <a class="button secondary" href="/datev-exporter/api/0.2.0/">API 0.2.0 öffnen</a></p>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Referenz</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kompatibilität und Grenzen — datev-exporter</title>
+    <meta name="description" content="Nachweisbasierte Kompatibilitätsmatrix für DATEV-Buchungsstapel v13/v12 sowie Umfang und exakte Grenzen von datev-exporter 0.2.0.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kompatibilität und Grenzen — datev-exporter">
+    <meta property="og:description" content="Nachweisbasierte v13/v12-Matrix, Ausgabevertrag und exakte Produktgrenzen.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/compatibility.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/compatibility.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/compatibility.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/compatibility.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/compatibility.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./">Überblick</a>
+            <a href="getting-started.html">Einstieg</a>
+            <a href="compatibility.html" aria-current="page">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../en/compatibility.html" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Nachweisstand · Release 0.2.0</p>
+        <h1>Wissen, was geprüft ist – und was in eigener Verantwortung bleibt.</h1>
+        <p class="lede">Kompatibilität bezeichnet hier einen dokumentierten Dateiformatvertrag mit abgestuften Testnachweisen. Sie bedeutet keine DATEV-Zertifizierung, Partnerschaft oder garantierte Annahme durch eine Produktinstallation.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="Auf dieser Seite">
+                <strong>Auf dieser Seite</strong>
+                <a href="#version-matrix">v12/v13-Matrix</a>
+                <a href="#evidence">Nachweismethode</a>
+                <a href="#output-contract">Ausgabevertrag</a>
+                <a href="#limits">Umfang und Grenzen</a>
+                <a href="#sources">Primärquellen</a>
+            </nav>
+
+            <article class="prose">
+                <section id="version-matrix">
+                    <p class="eyebrow">Versionsmatrix</p>
+                    <h2>v13 besitzt fixierte offizielle Vertragsnachweise. v12 ist strukturell abgeleitet.</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Kompatibilitätsaussagen für datev-exporter 0.2.0</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Dimension</th>
+                                    <th scope="col">v13</th>
+                                    <th scope="col">Ältere v12</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Bibliotheksschema</th>
+                                    <td><span class="status">implementiert</span><br><code>CURRENT_V13</code>, exakt 125 Buchungsspalten.</td>
+                                    <td><span class="status">implementiert</span><br><code>LEGACY_V12</code>, exakt 124 Buchungsspalten.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Unterschied</th>
+                                    <td>Enthält Feld 125, <code>Abw. Skontokonto</code>.</td>
+                                    <td>Exakt die ersten 124 Felder der bibliotheksinternen v13-Tabelle; Feld 125 fehlt.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">EXTF-Verwaltungssatz</th>
+                                    <td><span class="status">implementiert</span><br><code>DatevMetadata.bookingBatchV13()</code>; unpassende Schema-/Metadatenversion wird abgelehnt.</td>
+                                    <td><span class="status">implementiert</span><br><code>DatevMetadata.bookingBatchV12()</code>; unpassende Schema-/Metadatenversion wird abgelehnt.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Vollständige integrierte Ausgabe</th>
+                                    <td><span class="status">implementiert</span><br>Verwaltungssatz, offizielle Überschrift und Buchungszeilen.</td>
+                                    <td><span class="status">implementiert</span><br>Verwaltungssatz, offizielle Überschrift und Buchungszeilen.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Fixierter Vergleich mit offiziellem Prüfprogrammschema</th>
+                                    <td><span class="status">vertraglich getestet</span><br>Alle 125 Feldtypen, Längen, Dezimalstellen, Pflichtkennzeichen sowie relevante Bezeichnungen/Aliase werden mit dem Schema aus Prüfprogramm DATEV-Format 2.2.3.0 verglichen.</td>
+                                    <td><span class="status derived">nicht unabhängig</span><br>In diesem Release ist kein separates offizielles v12-Prüfschema oder -Testobjekt fixiert.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Offizieller Beispielvertrag</th>
+                                    <td><span class="status">vertraglich getestet</span><br>Exakte Überschrift verglichen und alle 54 Buchungszeilen des fixierten offiziellen v13-Beispiels durch strikte semantische Validierung verarbeitet.</td>
+                                    <td><span class="status derived">nur abgeleitet</span><br>Bibliothekstests belegen Präfix, Breite und Serialisierung mit 124 Spalten; kein unabhängiges offizielles v12-Beispiel wird getestet.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Annahme im realen Zielsystem</th>
+                                    <td><span class="status no">nicht belegt</span><br>Kein dokumentierter Annahmetest in einer lizenzierten realen Umgebung für dieses Release.</td>
+                                    <td><span class="status no">nicht belegt</span><br>Kein dokumentierter Annahmetest in einer lizenzierten realen Umgebung für dieses Release.</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Aussagestufe</th>
+                                    <td>Gegen den offiziellen Vertrag getestete v13-Dateierzeugung; weiterhin ein Importkandidat.</td>
+                                    <td>Strukturell abgeleitete v12-Dateierzeugung; als älteren Pfad mit niedrigerem Nachweisniveau behandeln.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="callout warning">
+                        <strong>„Vertraglich getestet“ bedeutet nicht „von DATEV angenommen“</strong>
+                        <p>Der optionale Test liest fixierte offizielle Artefakte und prüft die erzeugte Struktur. Das bereitgestellte Prüfprogramm ist eine interaktive Windows-GUI ohne dokumentierten Headless-Vertrag für Ergebnis oder Exit-Code. Der Test behauptet weder einen erfolgreichen GUI-Bericht noch einen Produktimport.</p>
+                    </div>
+                </section>
+
+                <section id="evidence">
+                    <p class="eyebrow">Aufbau der Aussage</p>
+                    <h2>Die Nachweisleiter</h2>
+                    <ol class="steps">
+                        <li>
+                            <h3>Bibliotheksinvarianten</h3>
+                            <p>Standardtests fixieren beide Schemabreiten, beweisen v12 als die ersten 124 Felder von v13, erzwingen passende Metadatenversionen und testen Windows-1252-/CRLF-Serialisierung sowie die Grenze von 99.999 Zeilen.</p>
+                        </li>
+                        <li>
+                            <h3>Fixierte offizielle v13-Artefakte</h3>
+                            <p>Der optionale <code>datevCheckerTest</code> lädt das offizielle Prüfprogramm- und Beispielarchiv, verifiziert festgelegte SHA-256-Werte und vergleicht anschließend In-Memory-Schema und Beispielinhalt. Externe urheberrechtlich geschützte Artefakte werden nicht ins Repository kopiert.</p>
+                        </li>
+                        <li>
+                            <h3>Prüfung eines erzeugten Testobjekts</h3>
+                            <p>Eine deterministische vollständige v13-Datei wird strikt als Windows-1252 dekodiert und auf Verwaltungssatz, exakte nicht maskierte Überschrift, Buchungszeile mit 125 Zellen und CRLF-Satzgrenzen geprüft.</p>
+                        </li>
+                        <li>
+                            <h3>Zielannahme bleibt offen</h3>
+                            <p>Eine lizenzierte Bedienperson muss den Prüfbericht kontrollieren und in das tatsächlich konfigurierte Ziel importieren. Mandanteneinstellungen, Produktversionen, Stammdaten und Buchungsentscheidungen liegen außerhalb eines portablen Java-Tests.</p>
+                        </li>
+                    </ol>
+                    <p>Einsehbar sind der versionierte <a href="https://github.com/mrtyldr/datev-exporter/blob/v0.2.0/datev-exporter-verification/src/datevCheckerTest/java/io/github/mrtyldr/datev/advanced/DatevOfficialSchemaCompatibilityTest.java">Kompatibilitätstest zum offiziellen Schema</a> und die <a href="https://github.com/mrtyldr/datev-exporter/blob/v0.2.0/datev-exporter-verification/build.gradle">fixierte Download-/Prüfsummenkonfiguration</a>.</p>
+                </section>
+
+                <section id="output-contract">
+                    <p class="eyebrow">Exakte Dateigrenze</p>
+                    <h2>Was die vollständige integrierte Ausgabe zusichert</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Serialisierungsvertrag mit angehängten Metadaten</caption>
+                            <thead>
+                                <tr><th scope="col">Eigenschaft</th><th scope="col">Vertrag</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row">Satzfolge</th><td>EXTF-Verwaltungssatz, feste offizielle Überschrift, danach null bis 99.999 Buchungszeilen.</td></tr>
+                                <tr><th scope="row">Trennzeichen</th><td>Semikolon (<code>;</code>).</td></tr>
+                                <tr><th scope="row">Zeilenende</th><td>CRLF (<code>\r\n</code>) für jeden ausgegebenen Satz.</td></tr>
+                                <tr><th scope="row">Byte-Kodierung</th><td>Striktes Windows-1252 auf integrierten <code>OutputStream</code>-Pfaden; nicht darstellbare Metadaten oder Buchungswerte werden abgelehnt, nicht ersetzt.</td></tr>
+                                <tr><th scope="row">Überschrift</th><td>Exakte feste v13- oder v12-Reihenfolge, durch den integrierten Writer unmaskiert ausgegeben.</td></tr>
+                                <tr><th scope="row">Maskierung der Buchungszeile</th><td>DATEV-Textspaltenmaskierung und CSV-Escaping über den gemeinsamen <code>DatevCsv</code>-Codec.</td></tr>
+                                <tr><th scope="row">Atomare Validierung</th><td>Formatierung, Struktur-, Kodierungs- und konfigurierte semantische Prüfungen enden, bevor die Buchungszeile an das Ziel übergeben wird. Ein E/A-Fehler kann physisch nicht zurückgerollt werden.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>Ein vom Aufrufer gelieferter Zeichen-<code>Writer</code> kontrolliert seine spätere Byte-Kodierung. Eine metadatenfreie Advanced-Ausgabe darf bewusst einen anderen Zeichensatz für einen individuellen CSV-Folgevertrag wählen; das ist kein vollständiges kanonisches EXTF-Byteprofil.</p>
+                </section>
+
+                <section id="limits">
+                    <p class="eyebrow">Produktumfang</p>
+                    <h2>Fähigkeiten und explizite Nicht-Ziele</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Was die Bibliothek leistet und nicht leistet</caption>
+                            <thead>
+                                <tr><th scope="col">Bereich</th><th scope="col">Status</th><th scope="col">Bedeutung</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row">Feste v13/v12-Erzeugung</th><td><span class="status">ja</span></td><td>Kanonische Breite/Reihenfolge, typisierte EXTF-Metadaten und vollständige integrierte Dateiausgabe.</td></tr>
+                                <tr><th scope="row">Technische Validierung</th><td><span class="status">ja</span></td><td>Struktur, Format, Längen, Abhängigkeiten sowie optionale kontextbezogene Konto-/Datums-/Periodenprüfungen.</td></tr>
+                                <tr><th scope="row">Forward-only-Ausgabe</th><td><span class="status">ja</span></td><td><code>DatevStreamWriter</code> behält erfolgreich geschriebene Zeilen nicht; Zielpufferung bleibt beim Aufrufer.</td></tr>
+                                <tr><th scope="row">Individuelle CSV-Verträge</th><td><span class="status derived">optional</span></td><td>Advanced kann Überschriften umbenennen/umordnen; diese Ausgabe ist bewusst nicht mit EXTF-Metadaten kombinierbar.</td></tr>
+                                <tr><th scope="row">DATEV-GUI-/Server-/API-Integration</th><td><span class="status no">nein</span></td><td>Keine Authentifizierung, Uploads, Remote-API-Clients, Desktop-Automation oder Serverintegration.</td></tr>
+                                <tr><th scope="row">Buchhaltungs- oder Steuerlogik</th><td><span class="status no">nein</span></td><td>Keine Soll-/Haben-Entscheidung, Steuerbehandlung, Periodenabschlusspolitik oder Rechtsberatung.</td></tr>
+                                <tr><th scope="row">Kontenrahmenzuordnung</th><td><span class="status no">nein</span></td><td>Keine SKR03-/SKR04- oder Quellsystemkontenzuordnung. Der Aufrufer liefert freigegebene Konten.</td></tr>
+                                <tr><th scope="row">Stammdatenprüfung</th><td><span class="status no">nein</span></td><td>Keine Prüfung, ob Berater, Mandanten, Konten, Steuerschlüssel, Kostenstellen oder Geschäftspartner im Ziel existieren.</td></tr>
+                                <tr><th scope="row">Importgarantie/Zertifizierung</th><td><span class="status no">nein</span></td><td>Keine Zusage, dass eine erzeugte Datei von einem bestimmten DATEV-Produkt oder einer Konfiguration angenommen wird.</td></tr>
+                                <tr><th scope="row">Unbegrenzte Zeilen</th><td><span class="status no">nein</span></td><td>Eine Datei ist auf 99.999 Buchungszeilen begrenzt. Größere Exporte an einer fachlich freigegebenen Grenze aufteilen.</td></tr>
+                                <tr><th scope="row">Thread-sichere mutable Exporter</th><td><span class="status no">nein</span></td><td>Exporter-Instanzen sind mutabel und nicht thread-sicher; jede Datei/jeden Writer auf einen Thread begrenzen.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sources">
+                    <p class="eyebrow">Primärreferenzen</p>
+                    <h2>Quellen des Formatvertrags</h2>
+                    <ul>
+                        <li>DATEV Developer Portal: <a href="https://developer.datev.de/de/file-format/details/datev-format/getting-started">technischer Aufbau / Einstieg</a>.</li>
+                        <li>DATEV Developer Portal: <a href="https://developer.datev.de/de/file-format/details/datev-format/format-description/booking-batch">Formatbeschreibung Buchungsstapel</a>.</li>
+                        <li>DATEV Developer Portal: <a href="https://developer.datev.de/de/file-format/details/datev-format/format-description/header">Beschreibung des Verwaltungssatzes</a>.</li>
+                        <li>DATEV Developer Portal: <a href="https://developer.datev.de/de/file-format/details/datev-format/character-set">Zeichensatzbeschreibung</a>.</li>
+                        <li>DATEV Developer Portal: <a href="https://developer.datev.de/de/file-format/details/datev-format/tools">Prüfprogramm DATEV-Format</a> und <a href="https://developer.datev.de/de/file-format/details/datev-format/format-description/sample-data">Beispieldaten</a>.</li>
+                    </ul>
+                    <p>Diese Links beschreiben das DATEV-Format; sie implizieren keine Verbindung. Die Website paraphrasiert nur die für den Bibliotheksvertrag nötigen Teile und verteilt weder DATEV-Dokumentation noch Prüfprogrammbinärdateien oder Beispieldateien.</p>
+                    <p><a class="button" href="getting-started.html">Export erstellen</a> <a class="button secondary" href="reference.html">API auswählen</a></p>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="https://github.com/mrtyldr/datev-exporter/releases/tag/v0.2.0">Release 0.2.0</a>
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

@@ -34,6 +34,7 @@ Thumbs.db
 
 # Local agent and assistant configuration
 .codex/
+.playwright-cli/
 .claude/
 .aider*
 
@@ -51,3 +52,7 @@ secring.*
 .writetest
 *.log
 *.tmp
+
+# Python helper-script caches
+__pycache__/
+*.py[cod]

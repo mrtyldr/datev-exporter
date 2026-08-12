@@ -14,3 +14,20 @@ dependencies {
         api project(':datev-exporter-advanced')
     }
 }
+
+// Keep the public API documentation set explicit. Internal verification, benchmarks and runnable
+// examples are useful build projects, but they are not Maven Central artifacts and must not appear
+// as library modules on the documentation site.
+def publishedJavaModulePaths = [
+        ':datev-exporter-core',
+        ':datev-exporter-plain',
+        ':datev-exporter-field-validator',
+        ':datev-exporter-advanced',
+        ':datev-exporter-advanced-univocity'
+]
+
+tasks.register('siteJavadocs') {
+    group = 'documentation'
+    description = 'Generates Javadoc for every published Java module used by GitHub Pages.'
+    dependsOn publishedJavaModulePaths.collect { "${it}:javadoc" }
+}

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>99,999-row JMH benchmark — datev-exporter</title>
+    <meta name="description" content="Reproducible Java 17 JMH measurements for complete, strictly validated 99,999-row DATEV Buchungsstapel / EXTF v13 output, including allocation profiling.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="datev-exporter 99,999-row benchmark">
+    <meta property="og:description" content="Measured time and cumulative allocation for retained, forward-only and advanced EXTF output on Java 17.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/benchmarks.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="./">Overview</a>
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="reference.html">Reference</a>
+            <a href="benchmarks.html" aria-current="page">Benchmarks</a>
+            <a class="language-link" href="../de/benchmarks.html" lang="de" hreflang="de">DE</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Measured locally · v0.2.0 · Java 17</p>
+        <h1>A complete 99,999-row EXTF file.</h1>
+        <p class="lede">A reproducible JMH run compares three strictly validated exporter paths, records cumulative allocation, and preserves the uncertainty instead of turning one laptop run into a universal claim.</p>
+        <div class="chips" aria-label="Benchmark scope">
+            <span class="version-chip">99,999 booking rows</span>
+            <span class="version-chip">33,602,459 bytes emitted</span>
+            <span class="version-chip">2 forks · 10 samples</span>
+            <span class="version-chip">disk I/O excluded</span>
+        </div>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#result">Result</a>
+                <a href="#interpretation">Interpretation</a>
+                <a href="#workload">Workload</a>
+                <a href="#method">Method</a>
+                <a href="#reproduce">Reproduce</a>
+                <a href="#limits">Limits</a>
+            </nav>
+
+            <article class="prose">
+                <section id="result">
+                    <p class="eyebrow">Observed data</p>
+                    <h2>This run did not resolve a timing difference between the two plain paths.</h2>
+                    <p>One operation creates a complete EXTF v13 file containing the management record, the 125-column heading and 99,999 booking rows. Lower is better in the time and allocation columns. The <code>±</code> values are JMH 99.9% confidence-interval half-widths across ten measurement samples, under JMH’s normality assumption.</p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Apple M1 Pro, Temurin 17.0.19, one benchmark thread, complete output per operation</caption>
+                            <thead>
+                            <tr>
+                                <th scope="col">Exporter path</th>
+                                <th scope="col">Time / file</th>
+                                <th scope="col">Derived time / row</th>
+                                <th scope="col">Derived rows / second</th>
+                                <th scope="col">Allocated bytes / file</th>
+                                <th scope="col">Derived allocated bytes / row</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <th scope="row">Plain forward-only<br><code>DatevStreamWriter</code></th>
+                                <td>670.193 ± 34.910 ms</td>
+                                <td>6.702 µs</td>
+                                <td>149,209</td>
+                                <td>980,975,803 ± 10,710,036 B</td>
+                                <td>9,809.86 B</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Plain retained<br><code>DatevFile</code></th>
+                                <td>670.000 ± 15.068 ms</td>
+                                <td>6.700 µs</td>
+                                <td>149,252</td>
+                                <td>1,011,067,254 ± 10,710,046 B</td>
+                                <td>10,110.77 B</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Advanced retained<br><code>advanced.DatevFile</code></th>
+                                <td>742.976 ± 51.878 ms</td>
+                                <td>7.430 µs</td>
+                                <td>134,593</td>
+                                <td>966,056,224 ± 10,710,041 B</td>
+                                <td>9,660.66 B</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="callout tip">
+                        <strong>The defensible takeaway</strong>
+                        <p>The two plain means differ by only 0.03%, far below their reported uncertainty, so this run supports no timing ranking between them. Forward-only allocated about 3.0% fewer cumulative bytes than plain retained in this workload. Advanced retained had the lowest allocation score and the highest observed mean time, but this single run is not evidence of a universal ranking.</p>
+                    </div>
+                </section>
+
+                <section id="interpretation">
+                    <p class="eyebrow">Product decision</p>
+                    <h2>Choose the lifecycle first, not the smallest benchmark number.</h2>
+                    <h3>Use forward-only for one-pass, high-volume export</h3>
+                    <p><code>DatevStreamWriter</code> validates, serializes and hands off each completed row without retaining it in a library-owned collection. Its live retained row state is therefore proportional to one row rather than the total row count. That design property—not a speed claim—is the strongest reason to prefer it for a 99,999-row one-pass export.</p>
+
+                    <h3>Use retained output when rows must remain available</h3>
+                    <p>The retained APIs support inspection, iteration and delayed writing. That lifecycle is useful when the caller must review or replay rows; this run did not resolve a timing difference versus forward-only. It necessarily keeps aligned rows alive until the file object can be released.</p>
+
+                    <h3>Allocation is not retained heap</h3>
+                    <p>JMH’s <code>gc.alloc.rate.norm</code> reports all bytes allocated during an operation, including short-lived validation and serialization objects. It does not report peak live heap. The advanced retained result demonstrates the distinction: it allocated the fewest cumulative bytes here even though it still retains the aligned rows. A separate live-set or heap-occupancy study would be required to quantify peak memory.</p>
+                </section>
+
+                <section id="workload">
+                    <p class="eyebrow">What was measured</p>
+                    <h2>A sparse but non-trivial fixed row.</h2>
+                    <ul>
+                        <li><strong>Format:</strong> complete DATEV Buchungsstapel / EXTF v13, Windows-1252 and CRLF.</li>
+                        <li><strong>Size:</strong> 125 columns; 99,999 booking rows, the supported per-file maximum.</li>
+                        <li><strong>Density:</strong> six non-empty fields per row: amount, debit/credit marker, account, contra account, document date and booking text.</li>
+                        <li><strong>Escaping:</strong> booking text is <code>Müller; Beleg "42" €</code>, exercising Windows-1252, delimiter and quote escaping.</li>
+                        <li><strong>Validation:</strong> metadata-aware strict semantic validation on every append. Plain paths use <code>DatevValidator</code>; advanced uses built-in <code>STRICT</code> mode.</li>
+                        <li><strong>Output:</strong> all paths are checked byte-for-byte and emit exactly 33,602,459 bytes: 2,795 fixed management/heading bytes plus 336 bytes per booking row.</li>
+                    </ul>
+                    <p>The same immutable six-entry map is submitted for each row. Row alignment, validation and serialization remain inside the timed operation; upstream record creation and accounting-data mapping do not.</p>
+                </section>
+
+                <section id="method">
+                    <p class="eyebrow">Measurement contract</p>
+                    <h2>Environment and JMH configuration.</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody>
+                            <tr><th scope="row">Library under test</th><td><a href="https://github.com/mrtyldr/datev-exporter/commit/06fa7ae238990d579ae3f7f40f64260d421a94fb">v0.2.0 · commit 06fa7ae</a></td></tr>
+                            <tr><th scope="row">Measured</th><td>12 August 2026</td></tr>
+                            <tr><th scope="row">Machine</th><td>Apple M1 Pro, 10 logical CPUs, 32 GiB RAM, aarch64</td></tr>
+                            <tr><th scope="row">Operating system</th><td>macOS 26.5.2 (build 25F84)</td></tr>
+                            <tr><th scope="row">JVM</th><td>Eclipse Temurin 17.0.19+10; <code>-Xms1g -Xmx1g -XX:+AlwaysPreTouch</code></td></tr>
+                            <tr><th scope="row">Harness</th><td>JMH 1.37, average-time mode, one thread, two forks</td></tr>
+                            <tr><th scope="row">Iterations</th><td>Per fork: three × 1 s warmup, then five × 1 s measurement</td></tr>
+                            <tr><th scope="row">Profiler</th><td>JMH <code>gc</code>; normalized allocation in bytes per operation</td></tr>
+                            <tr><th scope="row">Destination</th><td>A pre-sized, reusable <code>ByteArrayOutputStream</code>, reset outside each measured invocation</td></tr>
+                            <tr><th scope="row">I/O</th><td>Byte serialization and destination writes included; filesystem, network and destination allocation excluded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>Each measured call constructs its exporter and performs all 99,999 appends plus final output. Immutable fixture construction, output capacity allocation and initial byte-equivalence checks happen at trial setup. The final invocation is checked again at trial teardown.</p>
+                </section>
+
+                <section id="reproduce">
+                    <p class="eyebrow">Run it yourself</p>
+                    <h2>The maximum-row task pins the important inputs.</h2>
+<pre><code>git clone https://github.com/mrtyldr/datev-exporter.git
+cd datev-exporter
+git checkout cb91f5dd8b174bb4e10d98a8a7cc93f007483042
+./gradlew --no-daemon :datev-exporter-benchmarks:jmhMaxRows</code></pre>
+                    <p>The task selects the Adoptium Java 17 toolchain and expands to the following JMH settings:</p>
+<pre><code>-p rowCount=99999
+-wi 3 -w 1s
+-i 5 -r 1s
+-f 2 -t 1
+-jvmArgs "-Xms1g -Xmx1g -XX:+AlwaysPreTouch"
+-prof gc -rf json</code></pre>
+                    <p>Generated JSON is written to <code>datev-exporter-benchmarks/build/results/jmh/max-rows-gc.json</code>. The published summary retains every raw timing and allocation sample:</p>
+                    <ul>
+                        <li><a href="https://github.com/mrtyldr/datev-exporter/blob/cb91f5dd8b174bb4e10d98a8a7cc93f007483042/datev-exporter-benchmarks/results/v0.2.0-macos-aarch64-jdk17.json">Machine-readable result and raw samples</a></li>
+                        <li><a href="https://github.com/mrtyldr/datev-exporter/blob/cb91f5dd8b174bb4e10d98a8a7cc93f007483042/datev-exporter-benchmarks/src/jmh/java/io/github/mrtyldr/datev/benchmark/CompleteExtfWritingBenchmark.java">Benchmark source</a></li>
+                        <li><a href="/datev-exporter/api/0.2.0/">Versioned Java API</a></li>
+                    </ul>
+                </section>
+
+                <section id="limits">
+                    <p class="eyebrow">Do not over-generalize</p>
+                    <h2>What this run cannot establish.</h2>
+                    <ul>
+                        <li>It is one run on one developer laptop, without dedicated-host isolation, CPU pinning or thermal controls.</li>
+                        <li>The ten samples estimate steady-state behavior for this fixture; they are not production latency percentiles.</li>
+                        <li>Derived rows/second is arithmetic from average file time, not a multi-threaded throughput test.</li>
+                        <li>The sparse fixed row does not model every field density, value length, validation failure or upstream object-allocation pattern.</li>
+                        <li>The in-memory destination excludes filesystem, network, encryption, compression and caller-selected buffering costs.</li>
+                        <li>The profiler measures cumulative allocation, not maximum RSS, peak live heap or retained object size.</li>
+                        <li>No Univocity path is included: the adapter has a different output boundary and cannot produce the complete management-record-plus-bookings file measured here.</li>
+                    </ul>
+                    <p>Use these figures to understand this implementation and to reproduce a comparison on your deployment hardware—not as an SLA. Review the <a href="compatibility.html">compatibility evidence and limits</a> separately; speed does not prove DATEV import acceptance.</p>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="./">Overview</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

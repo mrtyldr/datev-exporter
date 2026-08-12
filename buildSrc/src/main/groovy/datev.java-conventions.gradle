@@ -30,6 +30,8 @@ tasks.withType(Javadoc).configureEach {
     options.encoding = 'UTF-8'
     options.charSet = 'UTF-8'
     options.docEncoding = 'UTF-8'
+    // Avoid embedding the build date so identical source releases produce stable documentation.
+    options.addBooleanOption('notimestamp', true)
 }
 
 tasks.withType(Jar).configureEach {

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JMH-Benchmark mit 99.999 Zeilen — datev-exporter</title>
+    <meta name="description" content="Reproduzierbare Java-17-JMH-Messungen für eine vollständige, streng validierte DATEV-Buchungsstapel-/EXTF-v13-Datei mit 99.999 Zeilen und Allokationsprofil.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="datev-exporter Benchmark mit 99.999 Zeilen">
+    <meta property="og:description" content="Gemessene Zeit und kumulative Allokation für gespeicherte, Forward-only- und Advanced-EXTF-Ausgabe unter Java 17.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/benchmarks.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/benchmarks.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/benchmarks.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/benchmarks.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./">Überblick</a>
+            <a href="getting-started.html">Einstieg</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="benchmarks.html" aria-current="page">Benchmarks</a>
+            <a class="language-link" href="../en/benchmarks.html" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Lokal gemessen · v0.2.0 · Java 17</p>
+        <h1>Eine vollständige EXTF-Datei mit 99.999 Zeilen.</h1>
+        <p class="lede">Ein reproduzierbarer JMH-Lauf vergleicht drei streng validierte Exportpfade, erfasst die kumulative Allokation und bewahrt die Messunsicherheit, statt aus einem Laptop-Lauf eine allgemeingültige Aussage zu machen.</p>
+        <div class="chips" aria-label="Benchmark-Umfang">
+            <span class="version-chip">99.999 Buchungszeilen</span>
+            <span class="version-chip">33.602.459 ausgegebene Bytes</span>
+            <span class="version-chip">2 Forks · 10 Stichproben</span>
+            <span class="version-chip">ohne Festplatten-I/O</span>
+        </div>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="Auf dieser Seite">
+                <strong>Auf dieser Seite</strong>
+                <a href="#result">Ergebnis</a>
+                <a href="#interpretation">Einordnung</a>
+                <a href="#workload">Arbeitslast</a>
+                <a href="#method">Methode</a>
+                <a href="#reproduce">Reproduzieren</a>
+                <a href="#limits">Grenzen</a>
+            </nav>
+
+            <article class="prose">
+                <section id="result">
+                    <p class="eyebrow">Beobachtete Daten</p>
+                    <h2>Dieser Lauf löste keinen Zeitunterschied zwischen den beiden Plain-Pfaden auf.</h2>
+                    <p>Eine Operation erzeugt eine vollständige EXTF-v13-Datei aus Verwaltungssatz, 125-spaltiger Überschrift und 99.999 Buchungszeilen. In den Zeit- und Allokationsspalten ist weniger besser. Die <code>±</code>-Werte sind die Halbbreiten der JMH-99,9-%-Konfidenzintervalle über zehn Messstichproben unter der Normalverteilungsannahme von JMH.</p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Apple M1 Pro, Temurin 17.0.19, ein Benchmark-Thread, vollständige Ausgabe je Operation</caption>
+                            <thead>
+                            <tr>
+                                <th scope="col">Exportpfad</th>
+                                <th scope="col">Zeit / Datei</th>
+                                <th scope="col">Abgeleitete Zeit / Zeile</th>
+                                <th scope="col">Abgeleitete Zeilen / Sekunde</th>
+                                <th scope="col">Allokierte Bytes / Datei</th>
+                                <th scope="col">Abgeleitete allokierte Bytes / Zeile</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <th scope="row">Plain Forward-only<br><code>DatevStreamWriter</code></th>
+                                <td>670,193 ± 34,910 ms</td>
+                                <td>6,702 µs</td>
+                                <td>149.209</td>
+                                <td>980.975.803 ± 10.710.036 B</td>
+                                <td>9.809,86 B</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Plain Retained<br><code>DatevFile</code></th>
+                                <td>670,000 ± 15,068 ms</td>
+                                <td>6,700 µs</td>
+                                <td>149.252</td>
+                                <td>1.011.067.254 ± 10.710.046 B</td>
+                                <td>10.110,77 B</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Advanced Retained<br><code>advanced.DatevFile</code></th>
+                                <td>742,976 ± 51,878 ms</td>
+                                <td>7,430 µs</td>
+                                <td>134.593</td>
+                                <td>966.056.224 ± 10.710.041 B</td>
+                                <td>9.660,66 B</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="callout tip">
+                        <strong>Die belastbare Aussage</strong>
+                        <p>Die Mittelwerte der beiden Plain-Pfade unterscheiden sich nur um 0,03 % und damit weit weniger als ihre ausgewiesene Unsicherheit; dieser Lauf trägt daher keine zeitliche Rangfolge. Forward-only allokierte in dieser Arbeitslast rund 3,0 % weniger kumulative Bytes als Plain Retained. Advanced Retained zeigte den niedrigsten Allokationswert und den höchsten beobachteten Zeitmittelwert; dieser einzelne Lauf begründet jedoch keine allgemeingültige Rangfolge.</p>
+                    </div>
+                </section>
+
+                <section id="interpretation">
+                    <p class="eyebrow">Produktentscheidung</p>
+                    <h2>Zuerst den Lebenszyklus wählen, nicht die kleinste Benchmark-Zahl.</h2>
+                    <h3>Forward-only für einmalige Exporte mit hohem Volumen</h3>
+                    <p><code>DatevStreamWriter</code> validiert, serialisiert und übergibt jede vollständige Zeile, ohne sie in einer bibliothekseigenen Sammlung zu speichern. Der lebende, zurückgehaltene Zeilenzustand ist damit proportional zu einer Zeile statt zur Gesamtzahl. Diese Entwurfseigenschaft – keine Geschwindigkeitsbehauptung – ist der stärkste Grund für Forward-only bei einem einmaligen Export mit 99.999 Zeilen.</p>
+
+                    <h3>Retained verwenden, wenn Zeilen verfügbar bleiben müssen</h3>
+                    <p>Die speichernden APIs erlauben Prüfung, Iteration und verzögerte Ausgabe. Dieser Lebenszyklus ist sinnvoll, wenn der Aufrufer Zeilen erneut prüfen oder ausgeben muss; dieser Lauf löste gegenüber Forward-only keinen Zeitunterschied auf. Die ausgerichteten Zeilen bleiben zwangsläufig bis zur Freigabe des Dateiobjekts im Speicher.</p>
+
+                    <h3>Allokation ist nicht gleich belegter Heap</h3>
+                    <p>JMH <code>gc.alloc.rate.norm</code> erfasst alle während einer Operation allokierten Bytes, einschließlich kurzlebiger Validierungs- und Serialisierungsobjekte. Es misst nicht den maximal lebenden Heap. Das Advanced-Retained-Ergebnis zeigt den Unterschied: Es allokierte hier kumulativ am wenigsten, obwohl es ausgerichtete Zeilen speichert. Zur Quantifizierung des Spitzenverbrauchs wäre eine separate Live-Set- oder Heap-Occupancy-Untersuchung erforderlich.</p>
+                </section>
+
+                <section id="workload">
+                    <p class="eyebrow">Gemessene Arbeitslast</p>
+                    <h2>Eine dünn belegte, aber nicht triviale feste Zeile.</h2>
+                    <ul>
+                        <li><strong>Format:</strong> vollständiger DATEV-Buchungsstapel / EXTF v13, Windows-1252 und CRLF.</li>
+                        <li><strong>Größe:</strong> 125 Spalten; 99.999 Buchungszeilen als unterstütztes Dateimaximum.</li>
+                        <li><strong>Belegung:</strong> sechs nicht leere Felder je Zeile: Betrag, Soll/Haben-Kennzeichen, Konto, Gegenkonto, Belegdatum und Buchungstext.</li>
+                        <li><strong>Maskierung:</strong> Der Buchungstext lautet <code>Müller; Beleg "42" €</code> und beansprucht Windows-1252-, Trennzeichen- und Anführungszeichenbehandlung.</li>
+                        <li><strong>Validierung:</strong> metadatenbezogene strenge semantische Validierung bei jedem Append. Plain verwendet <code>DatevValidator</code>, Advanced den eingebauten Modus <code>STRICT</code>.</li>
+                        <li><strong>Ausgabe:</strong> Alle Pfade werden bytegenau verglichen und erzeugen exakt 33.602.459 Bytes: 2.795 feste Verwaltungs-/Überschriftsbytes plus 336 Bytes je Buchungszeile.</li>
+                    </ul>
+                    <p>Für jede Zeile wird dieselbe unveränderliche Map mit sechs Einträgen übergeben. Zeilenausrichtung, Validierung und Serialisierung liegen im Messintervall; die vorgelagerte Datensatzerzeugung und fachliche Kontierungslogik nicht.</p>
+                </section>
+
+                <section id="method">
+                    <p class="eyebrow">Messvertrag</p>
+                    <h2>Umgebung und JMH-Konfiguration.</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody>
+                            <tr><th scope="row">Gemessene Bibliothek</th><td><a href="https://github.com/mrtyldr/datev-exporter/commit/06fa7ae238990d579ae3f7f40f64260d421a94fb">v0.2.0 · Commit 06fa7ae</a></td></tr>
+                            <tr><th scope="row">Messdatum</th><td>12. August 2026</td></tr>
+                            <tr><th scope="row">Rechner</th><td>Apple M1 Pro, 10 logische CPUs, 32 GiB RAM, aarch64</td></tr>
+                            <tr><th scope="row">Betriebssystem</th><td>macOS 26.5.2 (Build 25F84)</td></tr>
+                            <tr><th scope="row">JVM</th><td>Eclipse Temurin 17.0.19+10; <code>-Xms1g -Xmx1g -XX:+AlwaysPreTouch</code></td></tr>
+                            <tr><th scope="row">Messgerüst</th><td>JMH 1.37, Average-Time-Modus, ein Thread, zwei Forks</td></tr>
+                            <tr><th scope="row">Iterationen</th><td>Je Fork: drei × 1 s Warmup, danach fünf × 1 s Messung</td></tr>
+                            <tr><th scope="row">Profiler</th><td>JMH <code>gc</code>; normalisierte Allokation in Bytes je Operation</td></tr>
+                            <tr><th scope="row">Ziel</th><td>Ein vorab dimensionierter, wiederverwendeter <code>ByteArrayOutputStream</code>, außerhalb jeder Messoperation zurückgesetzt</td></tr>
+                            <tr><th scope="row">I/O</th><td>Byte-Serialisierung und Schreiben ins Ziel enthalten; Dateisystem, Netzwerk und Zielallokation ausgeschlossen</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>Jeder gemessene Aufruf erstellt seinen Exporter und führt alle 99.999 Appends sowie die abschließende Ausgabe aus. Unveränderliche Testdaten, Zielkapazität und der erste Bytegleichheitsvergleich werden vor der Messung vorbereitet. Die letzte Ausgabe wird nach dem Lauf erneut geprüft.</p>
+                </section>
+
+                <section id="reproduce">
+                    <p class="eyebrow">Selbst ausführen</p>
+                    <h2>Die Maximalzeilen-Task fixiert die wichtigen Eingaben.</h2>
+<pre><code>git clone https://github.com/mrtyldr/datev-exporter.git
+cd datev-exporter
+git checkout cb91f5dd8b174bb4e10d98a8a7cc93f007483042
+./gradlew --no-daemon :datev-exporter-benchmarks:jmhMaxRows</code></pre>
+                    <p>Die Task wählt die Adoptium-Java-17-Toolchain und verwendet diese JMH-Einstellungen:</p>
+<pre><code>-p rowCount=99999
+-wi 3 -w 1s
+-i 5 -r 1s
+-f 2 -t 1
+-jvmArgs "-Xms1g -Xmx1g -XX:+AlwaysPreTouch"
+-prof gc -rf json</code></pre>
+                    <p>Das erzeugte JSON liegt unter <code>datev-exporter-benchmarks/build/results/jmh/max-rows-gc.json</code>. Die veröffentlichte Zusammenfassung bewahrt jede rohe Zeit- und Allokationsstichprobe:</p>
+                    <ul>
+                        <li><a href="https://github.com/mrtyldr/datev-exporter/blob/cb91f5dd8b174bb4e10d98a8a7cc93f007483042/datev-exporter-benchmarks/results/v0.2.0-macos-aarch64-jdk17.json">Maschinenlesbares Ergebnis und Rohwerte</a></li>
+                        <li><a href="https://github.com/mrtyldr/datev-exporter/blob/cb91f5dd8b174bb4e10d98a8a7cc93f007483042/datev-exporter-benchmarks/src/jmh/java/io/github/mrtyldr/datev/benchmark/CompleteExtfWritingBenchmark.java">Benchmark-Quellcode</a></li>
+                        <li><a href="/datev-exporter/api/0.2.0/">Versionierte Java-API</a></li>
+                    </ul>
+                </section>
+
+                <section id="limits">
+                    <p class="eyebrow">Nicht verallgemeinern</p>
+                    <h2>Was dieser Lauf nicht belegt.</h2>
+                    <ul>
+                        <li>Es ist ein Lauf auf einem Entwickler-Laptop ohne dedizierte Host-Isolation, CPU-Pinning oder thermische Kontrolle.</li>
+                        <li>Die zehn Stichproben schätzen den eingeschwungenen Zustand dieser Arbeitslast; sie sind keine Produktions-Latenzperzentile.</li>
+                        <li>Zeilen pro Sekunde ist aus der durchschnittlichen Dateizeit berechnet und kein mehrthreadiger Durchsatztest.</li>
+                        <li>Die dünn belegte feste Zeile bildet nicht jede Felddichte, Wertlänge, Validierungsverletzung oder vorgelagerte Objektallokation ab.</li>
+                        <li>Das In-Memory-Ziel schließt Dateisystem, Netzwerk, Verschlüsselung, Kompression und aufruferseitige Pufferung aus.</li>
+                        <li>Der Profiler misst kumulative Allokation, nicht maximalen RSS, maximal lebenden Heap oder Retained Size.</li>
+                        <li>Ein Univocity-Pfad ist nicht enthalten: Der Adapter hat eine andere Ausgabegrenze und kann die hier gemessene vollständige Datei aus Verwaltungssatz und Buchungen nicht erzeugen.</li>
+                    </ul>
+                    <p>Diese Zahlen dienen zum Verständnis der Implementierung und als reproduzierbare Vergleichsbasis auf der eigenen Zielhardware – nicht als SLA. Die <a href="compatibility.html">Kompatibilitätsnachweise und Grenzen</a> sind separat zu bewerten; Geschwindigkeit belegt keine DATEV-Importannahme.</p>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="./">Überblick</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

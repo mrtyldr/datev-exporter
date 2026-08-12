@@ -1,6 +1,7 @@
 # DATEV Buchungsstapel exporter for Java
 
 [![Build](https://github.com/mrtyldr/datev-exporter/actions/workflows/build.yml/badge.svg)](https://github.com/mrtyldr/datev-exporter/actions/workflows/build.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-0969da)](https://mrtyldr.github.io/datev-exporter/)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.mrtyldr/datev-exporter-plain?label=Maven%20Central)](https://central.sonatype.com/search?namespace=io.github.mrtyldr)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
@@ -10,6 +11,9 @@ Windows-1252/CRLF serialization, deterministic technical validation and forward-
 
 This is a file-format exporter, not an accounting engine, SKR03/SKR04 mapper, DATEV API client or
 import certification.
+
+Read the [documentation](https://mrtyldr.github.io/datev-exporter/) or browse the
+[v0.2.0 Javadoc](https://mrtyldr.github.io/datev-exporter/api/0.2.0/).
 
 `datev-exporter` is a Java 17 multi-module library for creating DATEV Buchungsstapel CSV files.
 Its fixed-schema exporters support the current v13/125-column and legacy v12/124-column schemas,

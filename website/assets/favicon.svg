@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="17" fill="#006b54"/>
+  <path d="M64 38v9c0 9.4-7.6 17-17 17H25l39-39v13Z" fill="#004c3d" opacity=".55"/>
+  <text x="32" y="39" fill="#fff" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="20" font-weight="700" text-anchor="middle">d/x</text>
+</svg>

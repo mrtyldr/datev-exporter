@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Module and API reference — datev-exporter</title>
+    <meta name="description" content="Choose the right datev-exporter module, exporter, validation mode and output path for fixed DATEV EXTF or custom CSV contracts.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Module and API reference — datev-exporter">
+    <meta property="og:description" content="Choose the smallest module and output path that owns your DATEV or custom CSV contract.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/reference.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/reference.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="./">Overview</a>
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="reference.html" aria-current="page">Reference</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../de/reference.html" lang="de" hreflang="de">DE</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Decision guide · API 0.2.0</p>
+        <h1>Use the smallest module that owns your contract.</h1>
+        <p class="lede">The fixed official format, custom CSV needs and existing Univocity pipelines are separate use cases. Choosing explicitly keeps dependencies and output claims honest.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#modules">Modules</a>
+                <a href="#exporters">Exporter choice</a>
+                <a href="#validation">Validation</a>
+                <a href="#univocity">Univocity boundary</a>
+                <a href="#io">I/O ownership</a>
+                <a href="#api">Versioned API</a>
+            </nav>
+
+            <article class="prose">
+                <section id="modules">
+                    <p class="eyebrow">Artifacts</p>
+                    <h2>Module map</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Published Maven artifacts in release 0.2.0</caption>
+                            <thead>
+                                <tr><th scope="col">Artifact</th><th scope="col">Runtime dependencies</th><th scope="col">Responsibility</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row"><code>datev-exporter</code></th><td>None (platform POM)</td><td>BOM that aligns every module on one version. It contains no runtime API.</td></tr>
+                                <tr><th scope="row"><code>datev-exporter-core</code></th><td>None</td><td>Canonical schemas, field definitions, metadata, headers, CSV codec and validation model.</td></tr>
+                                <tr><th scope="row"><code>datev-exporter-plain</code></th><td><code>core</code></td><td>Fixed v13/v12 retained file and forward-only writer. Recommended output module.</td></tr>
+                                <tr><th scope="row"><code>datev-exporter-field-validator</code></th><td><code>core</code></td><td>Optional semantic validator callback for the plain exporter.</td></tr>
+                                <tr><th scope="row"><code>datev-exporter-advanced</code></th><td><code>core</code></td><td>Retained files with custom/renamed/reordered headings and built-in validation modes.</td></tr>
+                                <tr><th scope="row"><code>datev-exporter-advanced-univocity</code></th><td><code>advanced</code> + Univocity</td><td>Adapter for applications already committed to a Univocity <code>CsvWriter</code> pipeline.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p><code>datev-exporter-verification</code> and <code>datev-exporter-benchmarks</code> are internal build modules; they are not in the BOM or Maven Central publication.</p>
+                </section>
+
+                <section id="exporters">
+                    <p class="eyebrow">Decision table</p>
+                    <h2>Plain, advanced or Univocity?</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Exporter trade-offs</caption>
+                            <thead>
+                                <tr><th scope="col">Need</th><th scope="col">Plain</th><th scope="col">Advanced</th><th scope="col">Univocity adapter</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><th scope="row">Complete fixed v13/v12 EXTF</th><td><span class="status">recommended</span></td><td><span class="status">yes</span> with exact official header, strict mode and compatible metadata</td><td><span class="status no">no</span> management record</td></tr>
+                                <tr><th scope="row">Forward-only rows</th><td><span class="status">yes</span> <code>DatevStreamWriter</code></td><td><span class="status no">no</span> rows retained</td><td>Writes advanced retained rows through a third-party writer</td></tr>
+                                <tr><th scope="row">Rename/reorder headings</th><td><span class="status no">no</span></td><td><span class="status">yes</span></td><td><span class="status">yes</span> via advanced file</td></tr>
+                                <tr><th scope="row">Custom charset</th><td><span class="status no">no</span> byte path is Windows-1252</td><td>Only for metadata-free custom downstream contracts</td><td>Uses advanced file charset; strict encoder wrapper provided</td></tr>
+                                <tr><th scope="row">Third-party runtime dependency</th><td>None beyond core</td><td>None beyond core</td><td>Univocity</td></tr>
+                                <tr><th scope="row">Official heading byte shape</th><td>Canonical unquoted heading</td><td>Canonical on built-in writer with official header</td><td>Text headings are quoted differently</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="callout tip">
+                        <strong>Default recommendation</strong>
+                        <p>Use plain unless you can state a concrete custom-heading requirement. Use retained <code>DatevFile</code> for inspection/replay and <code>DatevStreamWriter</code> for one-pass production.</p>
+                    </div>
+                </section>
+
+                <section id="validation">
+                    <p class="eyebrow">Layered checks</p>
+                    <h2>Validation catches technical defects, not business truth</h2>
+                    <div class="grid-2">
+                        <article class="card">
+                            <p class="card-kicker">Always on in built-in output</p>
+                            <h3>Structural and encoding safety</h3>
+                            <p>Column width/order, known headings, CSV syntax/control characters, row limit and strict Windows-1252 encodability on byte output.</p>
+                        </article>
+                        <article class="card">
+                            <p class="card-kicker">Optional plain dependency</p>
+                            <h3><code>DatevValidator</code></h3>
+                            <p>A format-version/immutable-row callback. Build it with account length, fiscal-year start and period to validate context-dependent account and date rules.</p>
+                        </article>
+                        <article class="card">
+                            <p class="card-kicker">Advanced configuration</p>
+                            <h3><code>DatevValidationMode</code></h3>
+                            <p><code>STRICT</code> adds mandatory fields and dependencies; <code>FIELD_LEVEL</code> validates supplied known fields; <code>NONE</code> keeps structural CSV/header checks.</p>
+                        </article>
+                        <article class="card">
+                            <p class="card-kicker">Always application-owned</p>
+                            <h3>Accounting and master data</h3>
+                            <p>Account selection, tax treatment, validity in the target ledger and client-specific requirements must be validated outside this library.</p>
+                        </article>
+                    </div>
+                    <p>Adding <code>datev-exporter-field-validator</code> alone changes nothing. Pass the validator to the plain builder/factory. Official advanced schemas default to <code>STRICT</code>; custom headers default to <code>NONE</code> because their domain semantics are unknown.</p>
+                </section>
+
+                <section id="univocity">
+                    <p class="eyebrow">Interop, not replacement</p>
+                    <h2>The Univocity adapter solves one narrow problem</h2>
+                    <p>Choose <code>datev-exporter-advanced-univocity</code> only when the surrounding application already centralizes CSV emission in Univocity and heading-plus-booking-row output is the intended boundary.</p>
+<pre><code>CsvWriter writer = DatevUnivocityWriters.newCsvWriter(file, outputStream);
+DatevUnivocityWriters.writeTo(file, writer);</code></pre>
+                    <ul>
+                        <li>A <code>CsvWriter</code> emits uniformly shaped records and therefore cannot emit the differently shaped 31-field EXTF management record.</li>
+                        <li><code>writeTo</code> rejects a metadata-backed file. Use the advanced built-in <code>DatevFile.writeTo(OutputStream)</code> for a complete file.</li>
+                        <li><code>writeDataTo</code> explicitly writes only heading and rows, even if metadata exists.</li>
+                        <li>With unmodified official v12/v13 settings, booking rows match built-in output, but text headings are quoted differently. Whole-file byte parity is not claimed.</li>
+                        <li>The supplied <code>newCsvWriter</code> reports unmappable characters and leaves the caller stream open. Avoid raw Univocity constructors that may replace unsupported characters with <code>?</code>.</li>
+                    </ul>
+                </section>
+
+                <section id="io">
+                    <p class="eyebrow">Ownership rules</p>
+                    <h2>Output stays caller-owned</h2>
+                    <ul>
+                        <li>Built-in writers flush but do not close a caller-supplied <code>OutputStream</code> or <code>Writer</code>.</li>
+                        <li>Use the <code>OutputStream</code> overload for canonical Windows-1252 bytes. A character <code>Writer</code> is only a character contract; its final encoder is yours.</li>
+                        <li>Wrap otherwise unbuffered file/network output once. The library intentionally does not choose a persistent buffer size.</li>
+                        <li>Plain and advanced <code>DatevFile</code> retain accepted rows. <code>DatevStreamWriter</code> hands each accepted row forward and discards its assembly storage.</li>
+                        <li>All mutable exporter instances are single-threaded by design.</li>
+                    </ul>
+                    <p>See the <a href="getting-started.html#streaming">buffered streaming example</a> and <a href="benchmarks.html">benchmark report</a> before choosing based on volume.</p>
+                </section>
+
+                <section id="api">
+                    <p class="eyebrow">Symbol-level reference</p>
+                    <h2>Use versioned Javadoc for exact signatures</h2>
+                    <p>This guide explains contracts and decisions. The generated API site is the source for public classes, methods and their lifecycle details:</p>
+                    <ul>
+                        <li><a href="/datev-exporter/api/0.2.0/">Javadoc index for release 0.2.0</a></li>
+                        <li><a href="https://github.com/mrtyldr/datev-exporter/tree/v0.2.0/examples/quickstart-gradle">Versioned runnable quickstart source</a></li>
+                        <li><a href="https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter">Published BOM on Maven Central</a></li>
+                    </ul>
+                    <div class="callout warning">
+                        <strong>Pre-1.0 compatibility</strong>
+                        <p>The project follows Semantic Versioning, but public APIs may change between minor versions until 1.0.0. Pin the BOM version and read release notes when upgrading.</p>
+                    </div>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
