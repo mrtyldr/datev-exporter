@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DATEV-Buchungsstapel Validierungsfehler erklärt — datev-exporter</title>
+    <meta name="description" content="Was die sechs Validierungsfehlercodes von datev-exporter bedeuten, wann sie ausgelöst werden und wie sie sich vor dem Schreiben einer Buchungsstapel-Datei beheben lassen.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:title" content="DATEV-Buchungsstapel Validierungsfehler erklärt — datev-exporter">
+    <meta property="og:description" content="Was die sechs Validierungsfehlercodes von datev-exporter bedeuten, wann sie ausgelöst werden und wie sie sich vor dem Schreiben einer Buchungsstapel-Datei beheben lassen.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/validation-errors.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="DATEV-Buchungsstapel Validierungsfehler erklärt — datev-exporter">
+    <meta name="twitter:description" content="Was die sechs Validierungsfehlercodes von datev-exporter bedeuten, wann sie ausgelöst werden und wie sie sich vor dem Schreiben einer Buchungsstapel-Datei beheben lassen.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/validation-errors.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/validation-errors.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Dokumentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Validierungsfehler",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/validation-errors.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "inLanguage": "de",
+      "url": "https://mrtyldr.github.io/datev-exporter/de/validation-errors.html",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler REQUIRED_FIELD beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ein vom amtlichen Prüfprogramm als notwendig markiertes Feld ist leer — im strikten Modus auf einem amtlichen Schema. Feld füllen. Betroffen sind nur fünf Spalten: Umsatz, Soll/Haben-Kennzeichen, Konto, Gegenkonto und Belegdatum."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler INVALID_FORMAT beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ein Wert entspricht nicht der von DATEV geforderten Darstellung — eine fehlerhafte Zahl, ein Datum ohne realen Kalenderbezug, ein Kennzeichen außerhalb der erlaubten Menge oder ein Steuer- bzw. Zeilentrennzeichen innerhalb einer Zelle. Den Wert so formatieren, wie DATEV ihn erwartet, nicht wie das eigene Locale ihn ausgibt. Zeilenumbrüche und Tabulatoren aus Freitext entfernen."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler VALUE_OUT_OF_RANGE beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Der Wert ist syntaktisch gültig, überschreitet aber seinen Bereich — zu viele Vorkommastellen, zu viele Nachkommastellen oder eine Kontonummer breiter als die konfigurierte Sachkontenlänge. Maximale Länge und Nachkommastellen in der Feldreferenz prüfen und sicherstellen, dass die Sachkontenlänge in den Metadaten zum Mandanten passt."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler TEXT_TOO_LONG beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ein Textwert überschreitet die maximale Zeichenzahl des Feldes. Bewusst in der eigenen Zuordnung kürzen. Es wird nicht still gekürzt, weil der Verlust eines Teils des Buchungstexts eine fachliche Entscheidung ist."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler UNMAPPABLE_CHARACTER beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Der Wert enthält ein Zeichen, das Windows-1252 nicht darstellen kann. Das Zeichen vor dem Export transliterieren oder ersetzen. Die Kodierungsreferenz zeigt, welche Zeichen erhalten bleiben."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was bedeutet der Validierungsfehler DEPENDENT_FIELD_MISSING beim DATEV-Buchungsstapel-Export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Im strikten Modus wurde eine Hälfte eines Feldpaares ohne die andere gefüllt. Beide Hälften füllen — oder keine."
+          }
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./">Überblick</a>
+            <a href="getting-started.html">Erste Schritte</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="fields.html">Felder</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../en/validation-errors.html" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Validierungsreferenz · 0.2.0</p>
+        <h1>Sechs Fehlercodes und was sie jeweils aussagen.</h1>
+        <p class="lede">Jeder Validierungsfehler trägt einen stabilen maschinenlesbaren Code, die DATEV-Feldnummer und die amtliche Spaltenbezeichnung. Hier steht, was den Code auslöst und was zu ändern ist.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="Auf dieser Seite">
+                <strong>Auf dieser Seite</strong>
+                <a href="#modes">Drei Prüftiefen</a>
+                <a href="#codes">Die sechs Codes</a>
+                <a href="#dependencies">Die Feldpaare</a>
+                <a href="#context">Kontext schärft die Prüfungen</a>
+                <a href="#handling">Fehler im Code auswerten</a>
+            </nav>
+
+            <article class="prose">
+                <section id="modes">
+                    <h2>Drei Prüftiefen</h2>
+                    <p>Die Tiefe ist eine bewusste Entscheidung je Datei. Ein strikterer Modus ändert nie die geschriebenen Bytes, sondern nur, was vorher abgelehnt wird.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Validierungsmodi und die jeweils möglichen Codes</caption>
+                            <thead><tr><th scope="col">Modus</th><th scope="col">Was geprüft wird</th><th scope="col">Mögliche Codes</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>NONE</code></th><td>Keine semantische Prüfung. Die strukturellen Prüfungen des Exporters — Zeilenbreite, Steuerzeichen, Kodierbarkeit — gelten weiterhin.</td><td>—</td></tr>
+                        <tr><th scope="row"><code>FIELD_LEVEL</code></th><td>Jede gefüllte Zelle gegen ihre amtliche Felddefinition.</td><td><code>INVALID_FORMAT</code>, <code>VALUE_OUT_OF_RANGE</code>, <code>TEXT_TOO_LONG</code>, <code>UNMAPPABLE_CHARACTER</code></td></tr>
+                        <tr><th scope="row"><code>STRICT</code></th><td>Alles davon, zusätzlich Pflichtfelder und Feldabhängigkeiten.</td><td>alle sechs</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="codes">
+                    <h2>Die sechs Codes</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Stabile Kategorien von Validierungsfehlern</caption>
+                            <thead><tr><th scope="col">Code</th><th scope="col">Wird ausgelöst, wenn</th><th scope="col">Übliche Behebung</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>REQUIRED_FIELD</code></th><td>Ein vom amtlichen Prüfprogramm als notwendig markiertes Feld ist leer — im strikten Modus auf einem amtlichen Schema.</td><td>Feld füllen. Betroffen sind nur fünf Spalten: Umsatz, Soll/Haben-Kennzeichen, Konto, Gegenkonto und Belegdatum.</td></tr>
+                        <tr><th scope="row"><code>INVALID_FORMAT</code></th><td>Ein Wert entspricht nicht der von DATEV geforderten Darstellung — eine fehlerhafte Zahl, ein Datum ohne realen Kalenderbezug, ein Kennzeichen außerhalb der erlaubten Menge oder ein Steuer- bzw. Zeilentrennzeichen innerhalb einer Zelle.</td><td>Den Wert so formatieren, wie DATEV ihn erwartet, nicht wie das eigene Locale ihn ausgibt. Zeilenumbrüche und Tabulatoren aus Freitext entfernen.</td></tr>
+                        <tr><th scope="row"><code>VALUE_OUT_OF_RANGE</code></th><td>Der Wert ist syntaktisch gültig, überschreitet aber seinen Bereich — zu viele Vorkommastellen, zu viele Nachkommastellen oder eine Kontonummer breiter als die konfigurierte Sachkontenlänge.</td><td>Maximale Länge und Nachkommastellen in der Feldreferenz prüfen und sicherstellen, dass die Sachkontenlänge in den Metadaten zum Mandanten passt.</td></tr>
+                        <tr><th scope="row"><code>TEXT_TOO_LONG</code></th><td>Ein Textwert überschreitet die maximale Zeichenzahl des Feldes.</td><td>Bewusst in der eigenen Zuordnung kürzen. Es wird nicht still gekürzt, weil der Verlust eines Teils des Buchungstexts eine fachliche Entscheidung ist.</td></tr>
+                        <tr><th scope="row"><code>UNMAPPABLE_CHARACTER</code></th><td>Der Wert enthält ein Zeichen, das Windows-1252 nicht darstellen kann.</td><td>Das Zeichen vor dem Export transliterieren oder ersetzen. Die Kodierungsreferenz zeigt, welche Zeichen erhalten bleiben.</td></tr>
+                        <tr><th scope="row"><code>DEPENDENT_FIELD_MISSING</code></th><td>Im strikten Modus wurde eine Hälfte eines Feldpaares ohne die andere gefüllt.</td><td>Beide Hälften füllen — oder keine.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="dependencies">
+                    <h2>Die Feldpaare</h2>
+                    <p>Der strikte Modus erzwingt diese Paare. Wird nur eine Seite gefüllt, entsteht <code>DEPENDENT_FIELD_MISSING</code> auf der fehlenden Seite.</p>
+                    <ul>
+                        <li><code>Basis-Umsatz</code> ↔ <code>WKZ Basis-Umsatz</code> (Felder 5 und 6).</li>
+                        <li><code>Beleginfo - Art n</code> ↔ <code>Beleginfo - Inhalt n</code> für n = 1…8.</li>
+                        <li><code>Zusatzinformation - Art n</code> ↔ <code>Zusatzinformation- Inhalt n</code> für n = 1…20.</li>
+                    </ul>
+                </section>
+
+                <section id="context">
+                    <h2>Kontext schärft die Prüfungen</h2>
+                    <p>Manche Regeln lassen sich nicht allein aus dem Schema entscheiden. Ein Validierungskontext trägt die Angaben, die sie entscheidbar machen; ohne ihn werden genau diese Prüfungen übersprungen statt geraten.</p>
+                    <ul>
+                        <li>Die <strong>Sachkontenlänge</strong> begrenzt die Breite von <code>Konto</code> und <code>Gegenkonto</code>.</li>
+                        <li><strong>Wirtschaftsjahresbeginn</strong> und <strong>Buchungszeitraum</strong> erlauben es, das vierstellige <code>Belegdatum</code> gegen reale Kalenderdaten aufzulösen.</li>
+                    </ul>
+                    <div class="callout warning">
+                        <strong>Bestandene Validierung ist keine Importzertifizierung</strong>
+                        <p>Diese Prüfungen bestätigen, dass die Datei dem technischen Schema entspricht. Sie sagen nichts darüber aus, ob die Buchungen fachlich richtig sind oder ob ein bestimmtes DATEV-Produkt in einer bestimmten Konfiguration die Datei annimmt.</p>
+                    </div>
+                </section>
+
+                <section id="handling">
+                    <h2>Fehler im Code auswerten</h2>
+                    <p>Eine abgelehnte Zeile löst eine <code>DatevValidationException</code> aus, die die vollständige Fehlerliste trägt. Jeder Fehler behält Code, Feldnummer und amtliche Spaltenbezeichnung, sodass sich Fehler protokollieren oder abbilden lassen, ohne Meldungstexte zu parsen.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevValidationError;
+import io.github.mrtyldr.datev.core.DatevValidationException;
+
+try {
+    file.append(columns);
+} catch (DatevValidationException failure) {
+    for (DatevValidationError error : failure.errors()) {
+        log.warn("field {} ({}): {} — {}",
+                error.fieldNumber(),
+                error.canonicalKey(),
+                error.code(),
+                error.message());
+    }
+}</code></pre>
+                </section>
+                <section id="related">
+                    <h2>Verwandte Referenzen</h2>
+                    <ul>
+            <li><a href="fields.html">Feldreferenz — alle 125 Buchungsstapel-Spalten</a></li>
+            <li><a href="extf-header.html">EXTF-Header — der Verwaltungssatz mit 31 Feldern</a></li>
+            <li><a href="encoding.html">Kodierung — Windows-1252, CRLF, Quoting und Umlaute</a></li>
+                    </ul>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Referenz</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DATEV Buchungsstapel validation errors explained — datev-exporter</title>
+    <meta name="description" content="What each of the six datev-exporter validation error codes means, when it is raised, and how to resolve it before writing a DATEV Buchungsstapel file.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_DE">
+    <meta property="og:title" content="DATEV Buchungsstapel validation errors explained — datev-exporter">
+    <meta property="og:description" content="What each of the six datev-exporter validation error codes means, when it is raised, and how to resolve it before writing a DATEV Buchungsstapel file.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="DATEV Buchungsstapel validation errors explained — datev-exporter">
+    <meta name="twitter:description" content="What each of the six datev-exporter validation error codes means, when it is raised, and how to resolve it before writing a DATEV Buchungsstapel file.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/validation-errors.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/validation-errors.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Documentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Validation errors",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/validation-errors.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "inLanguage": "en",
+      "url": "https://mrtyldr.github.io/datev-exporter/en/validation-errors.html",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does the REQUIRED_FIELD validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A field the official checker marks as necessary is empty, in strict mode on an official schema. Populate the field. Only five columns are affected: Umsatz, Soll/Haben-Kennzeichen, Konto, Gegenkonto and Belegdatum."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the INVALID_FORMAT validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A value does not use DATEV's required representation — a malformed number, a date that is not a real calendar date, a flag outside its allowed set, or a control or line-separator character inside a cell. Format the value the way DATEV expects rather than the way your locale prints it. Strip newlines and tabs from free text."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the VALUE_OUT_OF_RANGE validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The value is syntactically valid but exceeds its range — too many integral digits, too many decimals, or an account number wider than the configured account length. Check the field's maximum length and decimal places in the field reference, and check that the account length in your metadata matches the client."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the TEXT_TOO_LONG validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A text value exceeds the field's maximum character count. Truncate deliberately in your own mapping. Silent truncation is not performed for you, because losing part of a Buchungstext is a business decision."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the UNMAPPABLE_CHARACTER validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The value contains a code point that Windows-1252 cannot represent. Transliterate or replace the character before export. See the encoding reference for which characters survive."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the DEPENDENT_FIELD_MISSING validation error mean in a DATEV Buchungsstapel export?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "One half of a paired field group was supplied without the other, in strict mode. Supply both halves, or neither."
+          }
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="./">Overview</a>
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="reference.html">Reference</a>
+            <a href="fields.html">Fields</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../de/validation-errors.html" lang="de" hreflang="de">DE</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Validation reference · 0.2.0</p>
+        <h1>Six error codes, and what each one is telling you.</h1>
+        <p class="lede">Validation failures carry a stable machine-readable code, the DATEV field number and the official column name. Here is what triggers each code and what to change.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#modes">Three validation depths</a>
+                <a href="#codes">The six codes</a>
+                <a href="#dependencies">The paired fields</a>
+                <a href="#context">Context sharpens the checks</a>
+                <a href="#handling">Reading errors in code</a>
+            </nav>
+
+            <article class="prose">
+                <section id="modes">
+                    <h2>Three validation depths</h2>
+                    <p>Depth is a deliberate choice per file. A stricter mode never changes the bytes that are written; it only changes what is rejected before writing.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Validation modes and the codes each one can produce</caption>
+                            <thead><tr><th scope="col">Mode</th><th scope="col">What it checks</th><th scope="col">Possible codes</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>NONE</code></th><td>Nothing semantic. The exporter's structural checks — row width, control characters, encodability — still apply.</td><td>—</td></tr>
+                        <tr><th scope="row"><code>FIELD_LEVEL</code></th><td>Each supplied non-empty cell against its official field definition.</td><td><code>INVALID_FORMAT</code>, <code>VALUE_OUT_OF_RANGE</code>, <code>TEXT_TOO_LONG</code>, <code>UNMAPPABLE_CHARACTER</code></td></tr>
+                        <tr><th scope="row"><code>STRICT</code></th><td>Everything above, plus required fields and cross-field dependencies.</td><td>all six</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="codes">
+                    <h2>The six codes</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Stable validation error categories</caption>
+                            <thead><tr><th scope="col">Code</th><th scope="col">Raised when</th><th scope="col">Usual fix</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>REQUIRED_FIELD</code></th><td>A field the official checker marks as necessary is empty, in strict mode on an official schema.</td><td>Populate the field. Only five columns are affected: Umsatz, Soll/Haben-Kennzeichen, Konto, Gegenkonto and Belegdatum.</td></tr>
+                        <tr><th scope="row"><code>INVALID_FORMAT</code></th><td>A value does not use DATEV's required representation — a malformed number, a date that is not a real calendar date, a flag outside its allowed set, or a control or line-separator character inside a cell.</td><td>Format the value the way DATEV expects rather than the way your locale prints it. Strip newlines and tabs from free text.</td></tr>
+                        <tr><th scope="row"><code>VALUE_OUT_OF_RANGE</code></th><td>The value is syntactically valid but exceeds its range — too many integral digits, too many decimals, or an account number wider than the configured account length.</td><td>Check the field's maximum length and decimal places in the field reference, and check that the account length in your metadata matches the client.</td></tr>
+                        <tr><th scope="row"><code>TEXT_TOO_LONG</code></th><td>A text value exceeds the field's maximum character count.</td><td>Truncate deliberately in your own mapping. Silent truncation is not performed for you, because losing part of a Buchungstext is a business decision.</td></tr>
+                        <tr><th scope="row"><code>UNMAPPABLE_CHARACTER</code></th><td>The value contains a code point that Windows-1252 cannot represent.</td><td>Transliterate or replace the character before export. See the encoding reference for which characters survive.</td></tr>
+                        <tr><th scope="row"><code>DEPENDENT_FIELD_MISSING</code></th><td>One half of a paired field group was supplied without the other, in strict mode.</td><td>Supply both halves, or neither.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="dependencies">
+                    <h2>The paired fields</h2>
+                    <p>Strict mode enforces these pairs. Supplying either side alone produces <code>DEPENDENT_FIELD_MISSING</code> on the missing side.</p>
+                    <ul>
+                        <li><code>Basis-Umsatz</code> ↔ <code>WKZ Basis-Umsatz</code> (fields 5 and 6).</li>
+                        <li><code>Beleginfo - Art n</code> ↔ <code>Beleginfo - Inhalt n</code> for n = 1…8.</li>
+                        <li><code>Zusatzinformation - Art n</code> ↔ <code>Zusatzinformation- Inhalt n</code> for n = 1…20.</li>
+                    </ul>
+                </section>
+
+                <section id="context">
+                    <h2>Context sharpens the checks</h2>
+                    <p>Some rules cannot be evaluated from the schema alone. A validation context carries the facts that make them decidable; without it, those specific checks are simply skipped rather than guessed.</p>
+                    <ul>
+                        <li><strong>Account length</strong> narrows how wide <code>Konto</code> and <code>Gegenkonto</code> may be.</li>
+                        <li><strong>Fiscal year start</strong> and <strong>posting period</strong> let the four-digit <code>Belegdatum</code> be resolved against real calendar dates.</li>
+                    </ul>
+                    <div class="callout warning">
+                        <strong>Passing validation is not import certification</strong>
+                        <p>These checks confirm the file matches the technical schema. They say nothing about whether the bookings are correct, or whether a specific DATEV product and configuration will accept the file.</p>
+                    </div>
+                </section>
+
+                <section id="handling">
+                    <h2>Reading errors in code</h2>
+                    <p>A rejected row raises <code>DatevValidationException</code>, which carries the full list of errors. Each error keeps its code, field number and official column name, so failures can be logged or mapped without parsing message text.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevValidationError;
+import io.github.mrtyldr.datev.core.DatevValidationException;
+
+try {
+    file.append(columns);
+} catch (DatevValidationException failure) {
+    for (DatevValidationError error : failure.errors()) {
+        log.warn("field {} ({}): {} — {}",
+                error.fieldNumber(),
+                error.canonicalKey(),
+                error.code(),
+                error.message());
+    }
+}</code></pre>
+                </section>
+                <section id="related">
+                    <h2>Related references</h2>
+                    <ul>
+            <li><a href="fields.html">Field reference — all 125 Buchungsstapel columns</a></li>
+            <li><a href="extf-header.html">EXTF header — the 31-field management record</a></li>
+            <li><a href="encoding.html">Encoding — Windows-1252, CRLF, quoting and umlauts</a></li>
+                    </ul>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Reference</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

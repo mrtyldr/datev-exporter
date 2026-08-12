@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EXTF-Header: der Verwaltungssatz des DATEV-Buchungsstapels — datev-exporter</title>
+    <meta name="description" content="Der EXTF-Verwaltungssatz mit 31 Feldern am Anfang jeder DATEV-Buchungsstapel-Datei: feste Konstanten, Datums- und Zeitformate, Quoting-Regeln und der Unterschied zwischen v13 und v12.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:title" content="EXTF-Header: der Verwaltungssatz des DATEV-Buchungsstapels — datev-exporter">
+    <meta property="og:description" content="Der EXTF-Verwaltungssatz mit 31 Feldern am Anfang jeder DATEV-Buchungsstapel-Datei: feste Konstanten, Datums- und Zeitformate, Quoting-Regeln und der Unterschied zwischen v13 und v12.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/extf-header.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EXTF-Header: der Verwaltungssatz des DATEV-Buchungsstapels — datev-exporter">
+    <meta name="twitter:description" content="Der EXTF-Verwaltungssatz mit 31 Feldern am Anfang jeder DATEV-Buchungsstapel-Datei: feste Konstanten, Datums- und Zeitformate, Quoting-Regeln und der Unterschied zwischen v13 und v12.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/extf-header.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/extf-header.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/extf-header.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/extf-header.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Dokumentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "EXTF-Header",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/extf-header.html"
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Zum Inhalt springen</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter Startseite"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Hauptnavigation">
+            <a href="./">Überblick</a>
+            <a href="getting-started.html">Erste Schritte</a>
+            <a href="compatibility.html">Kompatibilität</a>
+            <a href="reference.html">Referenz</a>
+            <a href="fields.html">Felder</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../en/extf-header.html" lang="en" hreflang="en">EN</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Formatreferenz · EXTF · 0.2.0</p>
+        <h1>Die Zeile vor den Überschriften.</h1>
+        <p class="lede">Eine Buchungsstapel-Datei beginnt mit einem Verwaltungssatz, dessen Aufbau nichts mit den darunter liegenden Buchungszeilen zu tun hat. Fehler hier sind der häufigste Grund, warum ein sonst korrekter Export abgelehnt wird.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="Auf dieser Seite">
+                <strong>Auf dieser Seite</strong>
+                <a href="#shape">Drei Sätze, zwei Formen</a>
+                <a href="#sample">Ein echter Verwaltungssatz</a>
+                <a href="#formats">Formate, über die man stolpert</a>
+                <a href="#coded">Die kodierten Felder</a>
+                <a href="#builder">Aufbau aus Java</a>
+            </nav>
+
+            <article class="prose">
+                <section id="shape">
+                    <h2>Drei Sätze, zwei Formen</h2>
+                    <p>Eine vollständige Datei besteht aus drei Schichten: dem EXTF-Verwaltungssatz, der exakten versionierten Spaltenüberschrift und den Buchungszeilen. Nur die letzten beiden teilen ihre Form. Der Verwaltungssatz hat immer 31 Felder, unabhängig von der Formatversion.</p>
+                    <p>Die ersten fünf Felder sind feste Kennungen. An ihnen erkennt ein Leser die Datei überhaupt erst:</p>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Feste Kennfelder des Verwaltungssatzes</caption>
+                            <thead><tr><th scope="col">Feld</th><th scope="col">Wert</th><th scope="col">Bedeutung</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row">1</th><td><code>EXTF</code></td><td>Kennzeichnet eine EXTF-Exportdatei.</td></tr>
+                        <tr><th scope="row">2</th><td><code>700</code></td><td>Header-Version.</td></tr>
+                        <tr><th scope="row">3</th><td><code>21</code></td><td>Formatkategorie für Buchungsstapel.</td></tr>
+                        <tr><th scope="row">4</th><td><code>Buchungsstapel</code></td><td>Formatname.</td></tr>
+                        <tr><th scope="row">5</th><td><code>13 / 12</code></td><td>Datenformatversion: 13 oder 12.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="sample">
+                    <h2>Ein echter Verwaltungssatz</h2>
+                    <p>Diese Zeilen erzeugt die Bibliothek selbst, aus Metadaten mit festem Zeitstempel, damit die Ausgabe reproduzierbar ist.</p>
+                    <p><strong>Formatversion 13</strong></p>
+<pre><code>&quot;EXTF&quot;;700;21;&quot;Buchungsstapel&quot;;13;20260812093000000;;&quot;RE&quot;;&quot;my_application&quot;;&quot;&quot;;1001;1;20260101;4;20260801;20260831;&quot;August 2026&quot;;&quot;&quot;;1;0;1;&quot;EUR&quot;;;&quot;&quot;;;;&quot;&quot;;;;&quot;&quot;;&quot;my-application&quot;</code></pre>
+                    <p><strong>Formatversion 12 — identisch bis auf Feld 5</strong></p>
+<pre><code>&quot;EXTF&quot;;700;21;&quot;Buchungsstapel&quot;;12;20260812093000000;;&quot;RE&quot;;&quot;my_application&quot;;&quot;&quot;;1001;1;20260101;4;20260801;20260831;&quot;August 2026&quot;;&quot;&quot;;1;0;1;&quot;EUR&quot;;;&quot;&quot;;;;&quot;&quot;;;;&quot;&quot;;&quot;my-application&quot;</code></pre>
+                    <div class="callout warning">
+                        <strong>Leer ist nicht dasselbe wie fehlend</strong>
+                        <p>Reservierte Felder werden als leere Zellen geschrieben, und Textfelder bleiben auch leer gequotet. Ein Feld wegzulassen statt es zu leeren verschiebt jedes folgende Feld um eine Position.</p>
+                    </div>
+                </section>
+
+                <section id="formats">
+                    <h2>Formate, über die man stolpert</h2>
+                    <ul>
+                        <li>Der <strong>Erstellungszeitstempel</strong> nutzt <code>yyyyMMddHHmmssSSS</code> — 17 Ziffern inklusive Millisekunden, ungequotet.</li>
+                        <li><strong>Wirtschaftsjahresbeginn und Buchungszeitraum</strong> nutzen <code>yyyyMMdd</code>, ungequotet.</li>
+                        <li><strong>Textfelder werden gequotet</strong>, auch die vorgesehenen leeren. Ein Anführungszeichen in der Anwendungsinformation wird durch Verdopplung maskiert.</li>
+                        <li><strong>Numerische Felder bleiben ungequotet</strong>, einschließlich Berater- und Mandantennummer.</li>
+                    </ul>
+                </section>
+
+                <section id="coded">
+                    <h2>Die kodierten Felder</h2>
+                    <p>Vier Felder nehmen Werte aus einer geschlossenen Menge statt freier Eingabe.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Buchungstyp</caption>
+                            <thead><tr><th scope="col">Konstante</th><th scope="col">DATEV-Wert</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>FINANCIAL_ACCOUNTING</code></th><td>1</td></tr>
+                        <tr><th scope="row"><code>ANNUAL_FINANCIAL_STATEMENTS</code></th><td>2</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Rechnungslegungszweck</caption>
+                            <thead><tr><th scope="col">Konstante</th><th scope="col">DATEV-Wert</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>INDEPENDENT</code></th><td>0</td></tr>
+                        <tr><th scope="row"><code>TAX_LAW</code></th><td>30</td></tr>
+                        <tr><th scope="row"><code>CALCULATION</code></th><td>40</td></tr>
+                        <tr><th scope="row"><code>COMMERCIAL_LAW</code></th><td>50</td></tr>
+                        <tr><th scope="row"><code>IFRS</code></th><td>64</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="builder">
+                    <h2>Aufbau aus Java</h2>
+                    <p>Die Metadaten werden einmal je Datei gebaut und bei der Konstruktion validiert, sodass eine unmögliche Kombination scheitert, bevor eine Zeile geschrieben wird. Der Builder wählt die Formatversion, und der Exporter lehnt einen Verwaltungssatz ab, dessen Version nicht zur Überschrift passt.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevMetadata;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Currency;
+
+DatevMetadata metadata = DatevMetadata.bookingBatchV13()
+        .createdAt(LocalDateTime.now())
+        .origin("RE")
+        .exportedBy("my_application")
+        .advisorNumber(1001)
+        .clientNumber(1)
+        .fiscalYearStart(LocalDate.of(2026, 1, 1))
+        .accountLength(4)
+        .period(LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 31))
+        .description("August 2026")
+        .currency(Currency.getInstance("EUR"))
+        .applicationInformation("my-application")
+        .build();
+
+String record = metadata.toCsvLine();   // the 31-field management record</code></pre>
+                    <div class="callout warning">
+                        <strong>Eine Version je Datei</strong>
+                        <p>Ein v12-Verwaltungssatz lässt sich nicht mit der 125-spaltigen v13-Überschrift kombinieren. Der Builder weist die Abweichung zurück, statt eine Datei zu schreiben, die kein Importeur deuten kann.</p>
+                    </div>
+                </section>
+                <section id="related">
+                    <h2>Verwandte Referenzen</h2>
+                    <ul>
+            <li><a href="fields.html">Feldreferenz — alle 125 Buchungsstapel-Spalten</a></li>
+            <li><a href="validation-errors.html">Validierungsfehler — die sechs Fehlercodes erklärt</a></li>
+            <li><a href="encoding.html">Kodierung — Windows-1252, CRLF, Quoting und Umlaute</a></li>
+                    </ul>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Unabhängiges Open-Source-Projekt.</strong> Keine Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG. Die Ausgabe ist ein Importkandidat, keine Zusage der Annahme.</p>
+        <nav class="footer-links" aria-label="Fußnavigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Referenz</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

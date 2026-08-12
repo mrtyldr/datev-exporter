@@ -7,6 +7,9 @@
     <meta name="description" content="datev-exporter mit Gradle oder Maven installieren, eine vollständige v13-EXTF-Datei erstellen und große DATEV-Buchungsstapel gepuffert streamen.">
     <meta name="robots" content="index,follow">
     <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:locale:alternate" content="en_US">
     <meta property="og:title" content="Erste Schritte — datev-exporter">
     <meta property="og:description" content="Mit Gradle oder Maven installieren, eine vollständige v13-EXTF-Datei erstellen und große Exporte streamen.">
     <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
@@ -14,12 +17,84 @@
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="640">
     <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Erste Schritte — datev-exporter">
+    <meta name="twitter:description" content="Mit Gradle oder Maven installieren, eine vollständige v13-EXTF-Datei erstellen und große Exporte streamen.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
     <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
     <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/getting-started.html">
     <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/getting-started.html">
     <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/getting-started.html">
     <link rel="stylesheet" href="../assets/site.css">
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Dokumentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Erste Schritte",
+          "item": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "Eine DATEV-Buchungsstapel-Datei im EXTF-Format v13 aus Java exportieren",
+      "description": "Die Bibliothek in einen Gradle- oder Maven-Build einbinden, typisierte Metadaten und Buchungszeilen zusammenstellen, eine vollständige v13-EXTF-Datei schreiben und das Ergebnis in der Zielumgebung prüfen.",
+      "inLanguage": "de",
+      "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Module und Java-Version wählen",
+          "text": "Java 17 oder neuer verwenden. datev-exporter-plain liefert die festen v13/v12-Schemata; datev-exporter-field-validator ergänzt deterministische semantische Prüfungen vor der Annahme jeder Zeile.",
+          "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html#requirements"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Abhängigkeit deklarieren",
+          "text": "Die datev-exporter-Bill-of-Materials importieren, damit die Modulversionen zusammenpassen, und anschließend die genutzten Module in Gradle oder Maven deklarieren.",
+          "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html#gradle"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Vollständige v13-Datei schreiben",
+          "text": "DatevMetadata für den Buchungsstapel erzeugen, einen DatevValidator aus dem passenden Validierungskontext bauen, Buchungszeilen an eine DatevFile anhängen und das Ergebnis in einen OutputStream schreiben.",
+          "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html#complete-file"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Große Exporte streamen",
+          "text": "Bei großen Mengen DatevStreamWriter verwenden: Verwaltungssatz und Überschrift werden beim Bauen geschrieben, danach wird pro Aufruf eine Buchungszeile übergeben, ohne erfolgreiche Zeilen zu behalten.",
+          "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html#streaming"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 5,
+          "name": "Über die Bibliothek hinaus prüfen",
+          "text": "Die eigene Zuordnung testen, die erzeugten Bytes als Windows-1252 mit CRLF erhalten und anschließend den zutreffenden DATEV-Prüfablauf sowie einen kontrollierten Import in der lizenzierten, konfigurierten Zielumgebung durchführen.",
+          "url": "https://mrtyldr.github.io/datev-exporter/de/getting-started.html#verify"
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
 <a class="skip-link" href="#content">Zum Inhalt springen</a>
@@ -31,6 +106,7 @@
             <a href="getting-started.html" aria-current="page">Einstieg</a>
             <a href="compatibility.html">Kompatibilität</a>
             <a href="reference.html">Referenz</a>
+            <a href="fields.html">Felder</a>
             <a href="benchmarks.html">Benchmarks</a>
             <a class="language-link" href="../en/getting-started.html" lang="en" hreflang="en">EN</a>
         </nav>
@@ -325,6 +401,7 @@ DatevFile legacy = DatevFile.builder(DatevSchema.LEGACY_V12)
             <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
             <a href="reference.html">Referenz</a>
             <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
         </nav>
     </div>
 </footer>

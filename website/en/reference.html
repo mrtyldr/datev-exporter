@@ -7,6 +7,9 @@
     <meta name="description" content="Choose the right datev-exporter module, exporter, validation mode and output path for fixed DATEV EXTF or custom CSV contracts.">
     <meta name="robots" content="index,follow">
     <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_DE">
     <meta property="og:title" content="Module and API reference — datev-exporter">
     <meta property="og:description" content="Choose the smallest module and output path that owns your DATEV or custom CSV contract.">
     <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/reference.html">
@@ -14,12 +17,37 @@
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="640">
     <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Module and API reference — datev-exporter">
+    <meta name="twitter:description" content="Choose the smallest module and output path that owns your DATEV or custom CSV contract.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
     <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
     <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
     <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/reference.html">
     <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/reference.html">
     <link rel="stylesheet" href="../assets/site.css">
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Documentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Reference",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/reference.html"
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to content</a>
@@ -31,6 +59,7 @@
             <a href="getting-started.html">Get started</a>
             <a href="compatibility.html">Compatibility</a>
             <a href="reference.html" aria-current="page">Reference</a>
+            <a href="fields.html">Fields</a>
             <a href="benchmarks.html">Benchmarks</a>
             <a class="language-link" href="../de/reference.html" lang="de" hreflang="de">DE</a>
         </nav>
@@ -48,6 +77,7 @@
         <div class="shell page-layout">
             <nav class="toc" aria-label="On this page">
                 <strong>On this page</strong>
+                <a href="#deep-dives">Deep-dive references</a>
                 <a href="#modules">Modules</a>
                 <a href="#exporters">Exporter choice</a>
                 <a href="#validation">Validation</a>
@@ -57,6 +87,29 @@
             </nav>
 
             <article class="prose">
+                <section id="deep-dives">
+                    <h2>Deep-dive references</h2>
+                    <p>Four pages cover the parts of the DATEV contract that generate the most questions. Each is generated from the library, so the tables match what the exporters actually write.</p>
+                    <div class="grid-2">
+                        <article class="card">
+                            <h3><a href="fields.html">Field reference</a></h3>
+                            <p>All 125 Buchungsstapel columns in output order, with official headings, checker types, lengths and version-12 availability.</p>
+                        </article>
+                        <article class="card">
+                            <h3><a href="validation-errors.html">Validation errors</a></h3>
+                            <p>The six stable error codes, what raises each one, the paired fields and the three validation depths.</p>
+                        </article>
+                        <article class="card">
+                            <h3><a href="extf-header.html">EXTF header</a></h3>
+                            <p>The 31-field management record: fixed identifiers, date and timestamp formats, quoting rules and the coded fields.</p>
+                        </article>
+                        <article class="card">
+                            <h3><a href="encoding.html">Encoding and umlauts</a></h3>
+                            <p>Windows-1252, CRLF, semicolons and quoting — which characters survive and how exports get corrupted afterwards.</p>
+                        </article>
+                    </div>
+                </section>
+
                 <section id="modules">
                     <p class="eyebrow">Artifacts</p>
                     <h2>Module map</h2>
@@ -186,6 +239,7 @@ DatevUnivocityWriters.writeTo(file, writer);</code></pre>
             <a href="getting-started.html">Get started</a>
             <a href="compatibility.html">Compatibility</a>
             <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
         </nav>
     </div>
 </footer>

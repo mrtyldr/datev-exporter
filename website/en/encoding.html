@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Windows-1252, CRLF and umlauts in DATEV exports — datev-exporter</title>
+    <meta name="description" content="How DATEV Buchungsstapel files are encoded: Windows-1252 bytes, CRLF records, semicolon delimiters, quoting rules, and which characters survive the conversion.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_DE">
+    <meta property="og:title" content="Windows-1252, CRLF and umlauts in DATEV exports — datev-exporter">
+    <meta property="og:description" content="How DATEV Buchungsstapel files are encoded: Windows-1252 bytes, CRLF records, semicolon delimiters, quoting rules, and which characters survive the conversion.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/encoding.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Windows-1252, CRLF and umlauts in DATEV exports — datev-exporter">
+    <meta name="twitter:description" content="How DATEV Buchungsstapel files are encoded: Windows-1252 bytes, CRLF records, semicolon delimiters, quoting rules, and which characters survive the conversion.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/encoding.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/encoding.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/encoding.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/encoding.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Documentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Encoding",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/encoding.html"
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="./">Overview</a>
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="reference.html">Reference</a>
+            <a href="fields.html">Fields</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../de/encoding.html" lang="de" hreflang="de">DE</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Codec reference · 0.2.0</p>
+        <h1>Windows-1252 is not a detail you can postpone.</h1>
+        <p class="lede">A Buchungsstapel file is bytes, not text. Umlauts survive; a Turkish dotless i does not. One careless UTF-8 step after export undoes everything.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#contract">The byte contract</a>
+                <a href="#quoting">When a value is quoted</a>
+                <a href="#characters">Which characters survive</a>
+                <a href="#control">Control characters</a>
+                <a href="#pitfalls">How exports get corrupted after they are written</a>
+            </nav>
+
+            <article class="prose">
+                <section id="contract">
+                    <h2>The byte contract</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Codec constants shared by every exporter</caption>
+                            <thead><tr><th scope="col">Property</th><th scope="col">Value</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row">Character encoding</th><td><code>windows-1252</code></td></tr>
+                        <tr><th scope="row">Record separator</th><td><code>\r\n</code> (CRLF)</td></tr>
+                        <tr><th scope="row">Field delimiter</th><td><code>;</code></td></tr>
+                        <tr><th scope="row">Quote character</th><td><code>"</code></td></tr>
+                        <tr><th scope="row">Escaped quote</th><td><code>""</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="quoting">
+                    <h2>When a value is quoted</h2>
+                    <p>Two independent rules decide quoting, and both are applied.</p>
+                    <ul>
+                        <li><strong>Official text columns are always quoted</strong>, even when empty. 84 of the 125 version 13 columns are text columns.</li>
+                        <li><strong>Any other value is quoted only when it must be</strong> — that is, when it contains a semicolon or a quote character.</li>
+                        <li><strong>An embedded quote is doubled</strong>, never backslash-escaped.</li>
+                    </ul>
+                </section>
+
+                <section id="characters">
+                    <h2>Which characters survive</h2>
+                    <p>Windows-1252 is a single-byte encoding, so it can represent at most 256 code points. German text is comfortably inside that range; a lot of other text is not.</p>
+                    <p><strong>Encodable — written unchanged</strong></p>
+<pre><code>ä ö ü ß Ä Ö Ü € § µ ° á é í ó ú ñ ç å ø æ š ž</code></pre>
+                    <p><strong>Not encodable — rejected as UNMAPPABLE_CHARACTER</strong></p>
+<pre><code>ı ğ ş ł ą č ř ő ū 日 😀</code></pre>
+                    <p>A value containing an unencodable character is refused rather than silently replaced with a question mark, because a corrupted Buchungstext is harder to notice later than a failed export now. Transliterate deliberately in your own mapping if your source data can contain such characters.</p>
+                </section>
+
+                <section id="control">
+                    <h2>Control characters</h2>
+                    <p>Control, line-separator and paragraph-separator characters are rejected anywhere in a cell, reported as <code>INVALID_FORMAT</code>. A newline inside a Buchungstext would otherwise split one booking row into two unusable records.</p>
+                </section>
+
+                <section id="pitfalls">
+                    <h2>How exports get corrupted after they are written</h2>
+                    <p>The library controls the bytes it writes. Everything downstream of that is yours to protect.</p>
+                    <ul>
+                        <li>A text editor that opens the file and saves it back as UTF-8 — every umlaut becomes two bytes and the file is no longer valid.</li>
+                        <li>A transfer or archiving step configured for text mode that rewrites CRLF to LF.</li>
+                        <li>Reading the file back with the platform default charset instead of Windows-1252.</li>
+                        <li>A templating or logging layer that normalises the output to Unicode NFD, splitting umlauts into base letter plus combining mark.</li>
+                    </ul>
+                    <div class="callout warning">
+                        <strong>Verify the bytes, not the rendering</strong>
+                        <p>A file that looks right in an editor may already be broken. Check the byte length and the encoding, and keep the generated file untouched between export and import.</p>
+                    </div>
+                </section>
+                <section id="related">
+                    <h2>Related references</h2>
+                    <ul>
+            <li><a href="fields.html">Field reference — all 125 Buchungsstapel columns</a></li>
+            <li><a href="validation-errors.html">Validation errors — the six error codes explained</a></li>
+            <li><a href="extf-header.html">EXTF header — the 31-field management record</a></li>
+                    </ul>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Reference</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

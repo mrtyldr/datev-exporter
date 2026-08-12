@@ -7,6 +7,9 @@
     <meta name="description" content="DATEV-Buchungsstapel / EXTF für v13 und v12 mit einer fokussierten Java-17-Bibliothek erzeugen, validieren und streamen.">
     <meta name="robots" content="index,follow">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="de_DE">
+    <meta property="og:locale:alternate" content="en_US">
     <meta property="og:title" content="datev-exporter — EXTF-Ausgabe für Java">
     <meta property="og:description" content="Feste v13/v12-Schemata, typisierte Metadaten, technische Validierung und Forward-only-Streaming.">
     <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/de/">
@@ -14,6 +17,11 @@
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="640">
     <meta property="og:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="datev-exporter — EXTF-Ausgabe für Java">
+    <meta name="twitter:description" content="Feste v13/v12-Schemata, typisierte Metadaten, technische Validierung und Forward-only-Streaming.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV-Buchungsstapel für Java">
     <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/de/">
     <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/">
     <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/">
@@ -33,7 +41,78 @@
       "programmingLanguage": "Java",
       "runtimePlatform": "Java 17 oder neuer",
       "license": "https://www.apache.org/licenses/LICENSE-2.0",
-      "isAccessibleForFree": true
+      "isAccessibleForFree": true,
+      "sameAs": [
+        "https://github.com/mrtyldr/datev-exporter",
+        "https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter",
+        "https://javadoc.io/doc/io.github.mrtyldr/datev-exporter-core"
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "inLanguage": "de",
+      "url": "https://mrtyldr.github.io/datev-exporter/de/",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Steht datev-exporter in Verbindung zu DATEV?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nein. Es handelt sich um ein unabhängiges Open-Source-Projekt ohne Verbindung zu, Unterstützung durch oder Empfehlung von DATEV. DATEV ist eine Marke der DATEV eG."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Garantiert die Bibliothek, dass DATEV die erzeugte Datei annimmt?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nein. Eine bestandene Validierung belegt weder buchhalterische Richtigkeit noch die Annahme durch ein bestimmtes DATEV-Produkt, einen Mandanten oder eine Konfiguration. Die Ausgabe ist ein Importkandidat; die Annahme muss in der lizenzierten, konfigurierten Zielumgebung geprüft werden."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Welche EXTF-Buchungsstapel-Versionen werden unterstützt?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Das feste v13-Schema mit 125 Spalten und das ältere v12-Schema mit 124 Spalten, jeweils mit dem passenden EXTF-Verwaltungssatz."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Ordnet die Bibliothek SKR03- oder SKR04-Konten zu oder bestimmt sie die Besteuerung?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nein. Die Bibliothek ist ein Formatexporter, keine Buchhaltungslogik. Kontenrahmen, steuerliche Behandlung und Stammdaten löst die aufrufende Anwendung auf."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Welche Kodierung und welche Zeilenenden verwenden die erzeugten Dateien?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Windows-1252-kodierte Bytes mit CRLF-Satztrennern gemäß dem DATEV-Importvertrag. Ein nachgelagerter UTF-8-Schritt darf sie nicht umschreiben."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Wie viele Buchungszeilen passen in eine Buchungsstapel-Datei?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Maximal 99.999 Buchungszeilen pro Datei. Ein reproduzierbarer JMH-Benchmark deckt dieses Szenario in voller Größe ab."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Was benötigt die Bibliothek zur Laufzeit?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Java 17 oder neuer. Der Plain- und der Advanced-Exporter haben keine Laufzeitabhängigkeiten von Drittanbietern; die Univocity-Interoperabilität ist ein ausdrücklich getrenntes Modul."
+          }
+        }
+      ]
     }
     </script>
 </head>
@@ -47,6 +126,7 @@
             <a href="getting-started.html">Einstieg</a>
             <a href="compatibility.html">Kompatibilität</a>
             <a href="reference.html">Referenz</a>
+            <a href="fields.html">Felder</a>
             <a href="benchmarks.html">Benchmarks</a>
             <a class="language-link" href="../en/" lang="en" hreflang="en">EN</a>
         </nav>
@@ -204,6 +284,7 @@
             <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
             <a href="https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter">Maven Central</a>
             <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
         </nav>
     </div>
 </footer>

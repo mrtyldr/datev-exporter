@@ -12,7 +12,10 @@ on:
       - 'datev-exporter-benchmarks/**'
       - 'gradle/**'
       - 'gradlew'
+      - 'scripts/DumpFieldSpecs.java'
+      - 'scripts/DumpHeaderRecord.java'
       - 'scripts/assemble-pages.py'
+      - 'scripts/generate-reference-pages.py'
       - 'scripts/indexnow-key.txt'
       - 'scripts/submit-indexnow.py'
       - 'website/**'
@@ -27,7 +30,10 @@ on:
       - 'datev-exporter-benchmarks/**'
       - 'gradle/**'
       - 'gradlew'
+      - 'scripts/DumpFieldSpecs.java'
+      - 'scripts/DumpHeaderRecord.java'
       - 'scripts/assemble-pages.py'
+      - 'scripts/generate-reference-pages.py'
       - 'scripts/indexnow-key.txt'
       - 'scripts/submit-indexnow.py'
       - 'website/**'
@@ -71,6 +77,32 @@ jobs:
 
       - name: Generate public-module Javadocs
         run: ./gradlew --no-daemon siteJavadocs -PreleaseVersion="$DOCS_VERSION"
+
+      # The published field, header and codec tables are generated from the library. Regenerating
+      # here fails the build if a schema change lands without refreshing the documentation, so the
+      # site cannot silently describe a schema the code no longer implements.
+      - name: Verify generated reference pages match the library
+        run: |
+          mkdir -p build/dump
+          javac -d build/dump \
+            -cp datev-exporter-core/build/classes/java/main \
+            scripts/DumpFieldSpecs.java scripts/DumpHeaderRecord.java
+          java -cp build/dump:datev-exporter-core/build/classes/java/main \
+            DumpFieldSpecs > build/fields.tsv
+          java -cp build/dump:datev-exporter-core/build/classes/java/main \
+            DumpHeaderRecord > build/header.tsv
+          python3 scripts/generate-reference-pages.py
+          # Scoped to the generated files only: an unrelated edit elsewhere in the site must not
+          # be reported as schema drift.
+          if ! git diff --quiet -- \
+              website/en/fields.html website/en/validation-errors.html \
+              website/en/extf-header.html website/en/encoding.html \
+              website/de/fields.html website/de/validation-errors.html \
+              website/de/extf-header.html website/de/encoding.html; then
+            echo "::error::Generated reference pages are stale. Run scripts/generate-reference-pages.py and commit the result."
+            git diff --stat -- website
+            exit 1
+          fi
 
       - name: Assemble and validate current-source site
         run: |

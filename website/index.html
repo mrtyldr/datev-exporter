@@ -3,10 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>datev-exporter documentation</title>
-    <meta name="description" content="Documentation for the independent Java 17 library that generates, validates and streams DATEV Buchungsstapel / EXTF v13 and v12 files.">
+    <title>datev-exporter — DATEV Buchungsstapel / EXTF library for Java</title>
+    <meta name="description" content="Documentation for the independent Java 17 library that generates, validates and streams DATEV Buchungsstapel / EXTF v13 and v12 files. Available in English and German.">
     <meta name="robots" content="index,follow">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_DE">
     <meta property="og:title" content="datev-exporter documentation">
     <meta property="og:description" content="DATEV Buchungsstapel / EXTF v13 and v12 output for Java 17.">
     <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/">
@@ -14,29 +17,181 @@
     <meta property="og:image:width" content="1280">
     <meta property="og:image:height" content="640">
     <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="datev-exporter documentation">
+    <meta name="twitter:description" content="DATEV Buchungsstapel / EXTF v13 and v12 output for Java 17.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
     <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/">
     <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/">
     <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/">
     <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/">
     <link rel="stylesheet" href="assets/site.css">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareSourceCode",
+      "name": "datev-exporter",
+      "version": "0.2.0",
+      "description": "Java 17 library for generating, validating and streaming DATEV Buchungsstapel / EXTF v13 and v12 import candidates.",
+      "codeRepository": "https://github.com/mrtyldr/datev-exporter",
+      "url": "https://mrtyldr.github.io/datev-exporter/",
+      "downloadUrl": "https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter",
+      "programmingLanguage": "Java",
+      "runtimePlatform": "Java 17 or newer",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "isAccessibleForFree": true,
+      "inLanguage": ["en", "de"],
+      "sameAs": [
+        "https://github.com/mrtyldr/datev-exporter",
+        "https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter",
+        "https://javadoc.io/doc/io.github.mrtyldr/datev-exporter-core"
+      ]
+    }
+    </script>
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to content</a>
-<main id="content" class="language-gate">
-    <section class="language-panel" aria-labelledby="page-title">
-        <p class="eyebrow">datev-exporter · Java 17 · v0.2.0</p>
-        <h1 id="page-title">Choose your documentation language.</h1>
-        <p class="lede">Generate, validate and stream DATEV Buchungsstapel / EXTF v13 and v12 import candidates from Java.</p>
-        <div class="language-options">
-            <a href="en/" lang="en" hreflang="en">English documentation →</a>
-            <a href="de/" lang="de" hreflang="de">Deutsche Dokumentation →</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Language selection">
+            <a href="en/" lang="en" hreflang="en">English</a>
+            <a href="de/" lang="de" hreflang="de">Deutsch</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <section class="hero">
+        <div class="shell hero-grid">
+            <div>
+                <p class="eyebrow">Java 17 · Apache-2.0 · release 0.2.0</p>
+                <h1>DATEV Buchungsstapel files, generated from Java.</h1>
+                <p class="lede">datev-exporter turns already-mapped booking data into deterministic DATEV Buchungsstapel / EXTF import candidates—fixed v13 and v12 schemas, typed metadata, technical validation and forward-only streaming, with no third-party runtime dependency on the common path.</p>
+                <div class="chips" aria-label="Project highlights">
+                    <span class="version-chip">v13 · 125 columns</span>
+                    <span class="version-chip">v12 · 124 columns</span>
+                    <span class="version-chip">Windows-1252 · CRLF</span>
+                    <span class="version-chip">99,999 rows per file</span>
+                </div>
+                <div class="language-options">
+                    <a href="en/" lang="en" hreflang="en">English documentation →</a>
+                    <a href="de/" lang="de" hreflang="de">Deutsche Dokumentation →</a>
+                </div>
+            </div>
+            <aside class="hero-aside" aria-label="Scope boundary">
+                <p class="card-kicker">The contract</p>
+                <h2>Format exporter, not accounting engine.</h2>
+                <p>Your application supplies mapped accounts, amounts, dates and business decisions. The library supplies the EXTF management record, official column order, CSV encoding and deterministic technical checks.</p>
+                <p><a href="en/compatibility.html#limits">Read the exact limitations →</a></p>
+            </aside>
         </div>
-        <div class="callout warning">
-            <strong>Independent open-source project</strong>
-            <p>This library is not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Generated files remain import candidates; acceptance must be verified in the licensed, configured target environment.</p>
+    </section>
+
+    <section class="section tint" aria-labelledby="start-title">
+        <div class="shell">
+            <div class="section-heading">
+                <p class="eyebrow">Where to go next</p>
+                <h2 id="start-title">Pick a language, then a starting point.</h2>
+                <p>Both documentation sets cover the same release and the same evidence. The German set uses the DATEV terminology as it appears in the output.</p>
+            </div>
+            <div class="grid-3">
+                <article class="card">
+                    <p class="card-kicker">Install and export</p>
+                    <h3>Getting started</h3>
+                    <p>Gradle and Maven setup, a complete v13 file, buffered streaming for large exports and the deliberate v12 path.</p>
+                    <p><a href="en/getting-started.html">English</a> · <a href="de/getting-started.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+                <article class="card">
+                    <p class="card-kicker">Claims and evidence</p>
+                    <h3>Compatibility and limitations</h3>
+                    <p>The graded v12/v13 evidence matrix, what the pinned official checker schema does and does not prove, and where responsibility stays with you.</p>
+                    <p><a href="en/compatibility.html">English</a> · <a href="de/compatibility.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+                <article class="card">
+                    <p class="card-kicker">Modules and API</p>
+                    <h3>Reference</h3>
+                    <p>Which of the five modules owns your contract, the validation layers, and the versioned Javadoc for release 0.2.0.</p>
+                    <p><a href="en/reference.html">English</a> · <a href="de/reference.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+            </div>
+            <div class="section-heading" style="margin-top: 2.5rem">
+                <p class="eyebrow">Deep dives</p>
+                <h2 id="deep-dives-title">The parts that generate the most questions.</h2>
+                <p>Generated from the library itself, so the tables match what the exporters actually write.</p>
+            </div>
+            <div class="grid-2">
+                <article class="card">
+                    <h3>Field reference</h3>
+                    <p>All 125 Buchungsstapel columns in output order, with official German headings, checker types, lengths and version-12 availability.</p>
+                    <p><a href="en/fields.html">English</a> · <a href="de/fields.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+                <article class="card">
+                    <h3>Validation errors</h3>
+                    <p>The six stable error codes, what raises each one, the paired fields and the three validation depths.</p>
+                    <p><a href="en/validation-errors.html">English</a> · <a href="de/validation-errors.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+                <article class="card">
+                    <h3>EXTF header</h3>
+                    <p>The 31-field management record: fixed identifiers, date and timestamp formats, quoting rules and the coded fields.</p>
+                    <p><a href="en/extf-header.html">English</a> · <a href="de/extf-header.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+                <article class="card">
+                    <h3>Encoding and umlauts</h3>
+                    <p>Windows-1252, CRLF, semicolons and quoting — which characters survive and how exports get corrupted afterwards.</p>
+                    <p><a href="en/encoding.html">English</a> · <a href="de/encoding.html" lang="de" hreflang="de">Deutsch</a></p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-labelledby="scope-title">
+        <div class="shell">
+            <div class="section-heading">
+                <p class="eyebrow">Scope in one screen</p>
+                <h2 id="scope-title">What the library does, and what it deliberately does not.</h2>
+            </div>
+            <div class="grid-2">
+                <article class="card">
+                    <h3>It does</h3>
+                    <ul>
+                        <li>Emit the EXTF management record, the exact versioned heading and formatted booking rows.</li>
+                        <li>Keep one ordered definition for all 125 v13 fields and the 124-field legacy v12 shape.</li>
+                        <li>Encode Windows-1252 bytes with CRLF record separators.</li>
+                        <li>Run deterministic structural checks, with optional semantic field validation.</li>
+                        <li>Stream forward-only when retaining rows is unnecessary.</li>
+                    </ul>
+                </article>
+                <article class="card">
+                    <h3>It does not</h3>
+                    <ul>
+                        <li>Map SKR03 or SKR04 accounts, or determine tax treatment.</li>
+                        <li>Act as an accounting engine or a DATEV API client.</li>
+                        <li>Certify an import or guarantee acceptance by any DATEV product.</li>
+                        <li>Replace verification in the licensed, configured target environment.</li>
+                    </ul>
+                </article>
+            </div>
+            <div class="callout warning">
+                <strong>Independent open-source project</strong>
+                <p>This library is not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Generated files remain import candidates; acceptance must be verified in the licensed, configured target environment.</p>
+            </div>
         </div>
     </section>
 </main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="https://central.sonatype.com/artifact/io.github.mrtyldr/datev-exporter">Maven Central</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
 </body>
 </html>

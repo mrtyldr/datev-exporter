@@ -12,8 +12,13 @@ Windows-1252/CRLF serialization, deterministic technical validation and forward-
 This is a file-format exporter, not an accounting engine, SKR03/SKR04 mapper, DATEV API client or
 import certification.
 
-Read the [documentation](https://mrtyldr.github.io/datev-exporter/) or browse the
-[v0.2.0 Javadoc](https://mrtyldr.github.io/datev-exporter/api/0.2.0/).
+Read the [documentation](https://mrtyldr.github.io/datev-exporter/) in
+[English](https://mrtyldr.github.io/datev-exporter/en/) or
+[German](https://mrtyldr.github.io/datev-exporter/de/), or browse the
+[v0.2.0 Javadoc](https://mrtyldr.github.io/datev-exporter/api/0.2.0/). For machine consumption the
+site also publishes [`llms.txt`](https://mrtyldr.github.io/datev-exporter/llms.txt) as a summary
+index and [`llms-full.txt`](https://mrtyldr.github.io/datev-exporter/llms-full.txt) as the complete
+documentation text.
 
 `datev-exporter` is a Java 17 multi-module library for creating DATEV Buchungsstapel CSV files.
 Its fixed-schema exporters support the current v13/125-column and legacy v12/124-column schemas,

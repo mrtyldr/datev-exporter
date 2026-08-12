@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DATEV Buchungsstapel field reference (v13 and v12) — datev-exporter</title>
+    <meta name="description" content="Every DATEV Buchungsstapel column: field number, official German heading, checker type, maximum length, decimal places, whether it is required and whether format version 12 contains it.">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="datev-exporter">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="de_DE">
+    <meta property="og:title" content="DATEV Buchungsstapel field reference (v13 and v12) — datev-exporter">
+    <meta property="og:description" content="Every DATEV Buchungsstapel column: field number, official German heading, checker type, maximum length, decimal places, whether it is required and whether format version 12 contains it.">
+    <meta property="og:url" content="https://mrtyldr.github.io/datev-exporter/en/fields.html">
+    <meta property="og:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta property="og:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="DATEV Buchungsstapel field reference (v13 and v12) — datev-exporter">
+    <meta name="twitter:description" content="Every DATEV Buchungsstapel column: field number, official German heading, checker type, maximum length, decimal places, whether it is required and whether format version 12 contains it.">
+    <meta name="twitter:image" content="https://mrtyldr.github.io/datev-exporter/assets/social-preview.png">
+    <meta name="twitter:image:alt" content="datev-exporter — DATEV Buchungsstapel for Java">
+    <link rel="canonical" href="https://mrtyldr.github.io/datev-exporter/en/fields.html">
+    <link rel="alternate" hreflang="en" href="https://mrtyldr.github.io/datev-exporter/en/fields.html">
+    <link rel="alternate" hreflang="de" href="https://mrtyldr.github.io/datev-exporter/de/fields.html">
+    <link rel="alternate" hreflang="x-default" href="https://mrtyldr.github.io/datev-exporter/en/fields.html">
+    <link rel="stylesheet" href="../assets/site.css">
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Documentation",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Field reference",
+          "item": "https://mrtyldr.github.io/datev-exporter/en/fields.html"
+        }
+      ]
+    }
+    </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header">
+    <div class="nav-shell">
+        <a class="brand" href="./" aria-label="datev-exporter home"><span class="brand-mark" aria-hidden="true">d/x</span>datev-exporter</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+            <a href="./">Overview</a>
+            <a href="getting-started.html">Get started</a>
+            <a href="compatibility.html">Compatibility</a>
+            <a href="reference.html">Reference</a>
+            <a href="fields.html" aria-current="page">Fields</a>
+            <a href="benchmarks.html">Benchmarks</a>
+            <a class="language-link" href="../de/fields.html" lang="de" hreflang="de">DE</a>
+        </nav>
+    </div>
+</header>
+
+<main id="content">
+    <header class="page-hero shell">
+        <p class="eyebrow">Field reference · schema v13 and v12 · 0.2.0</p>
+        <h1>All 125 Buchungsstapel columns, in official output order.</h1>
+        <p class="lede">Field numbers, exact German headings, checker types and lengths for format version 13, with the four differences that matter when you target version 12.</p>
+    </header>
+
+    <div class="section compact">
+        <div class="shell page-layout">
+            <nav class="toc" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#overview">What this table is</a>
+                <a href="#summary">Shape of the schema</a>
+                <a href="#required">Required fields</a>
+                <a href="#repeating">Repeating groups</a>
+                <a href="#table">Full field table</a>
+                <a href="#usage">Addressing a field from Java</a>
+            </nav>
+
+            <article class="prose">
+                <section id="overview">
+                    <h2>What this table is</h2>
+                    <p>A DATEV Buchungsstapel booking row has a fixed number of columns in a fixed order. Format version 13 defines 125 columns; version 12 defines the first 124 and omits <code>Abw. Skontokonto</code>. Column order carries meaning: a row is positional, so field 7 is <code>Konto</code> whether or not you supplied field 6.</p>
+                    <p>The table below is generated from <code>DatevFieldSpecs</code>, the single canonical copy of the schema that every module in this library derives from. It is not a hand-maintained transcription, so it cannot drift away from what the exporters actually write.</p>
+                    <div class="callout warning">
+                        <strong>This is a technical schema, not accounting guidance</strong>
+                        <p>Knowing that field 9 is <code>BU-Schlüssel</code> does not tell you which posting key your case needs. Account mapping, tax treatment and posting logic stay with your application and your tax adviser.</p>
+                    </div>
+                </section>
+
+                <section id="summary">
+                    <h2>Shape of the schema</h2>
+                    <div class="metrics">
+                    <div class="metric"><span class="metric-value">125</span><span class="metric-label">columns in version 13</span></div>
+                    <div class="metric"><span class="metric-value">124</span><span class="metric-label">columns in version 12</span></div>
+                    <div class="metric"><span class="metric-value">5</span><span class="metric-label">fields the checker marks required</span></div>
+                    <div class="metric"><span class="metric-value">5</span><span class="metric-label">logical field types</span></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>Field types across the 125 version 13 columns</caption>
+                            <thead><tr><th scope="col">Type</th><th scope="col">Checker name</th><th scope="col">Columns</th><th scope="col">Meaning</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row"><code>TEXT</code></th><td>Text</td><td>84</td><td>Quoted textual value; the maximum length counts characters.</td></tr>
+                        <tr><th scope="row"><code>NUMBER</code></th><td>Zahl</td><td>27</td><td>Unquoted numeric value with an optional comma decimal separator.</td></tr>
+                        <tr><th scope="row"><code>DATE</code></th><td>Datum</td><td>7</td><td>DATEV-formatted date.</td></tr>
+                        <tr><th scope="row"><code>ACCOUNT</code></th><td>Konto</td><td>4</td><td>Numeric account identifier, narrowed further by the account length.</td></tr>
+                        <tr><th scope="row"><code>AMOUNT</code></th><td>Betrag</td><td>3</td><td>Positive monetary value; the sign lives in Soll/Haben-Kennzeichen.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="required">
+                    <h2>The five required fields</h2>
+                    <p>Strict validation reports an empty value in these columns as <code>REQUIRED_FIELD</code>. Every other column may be left empty.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th scope="col">#</th><th scope="col">Official heading</th><th scope="col">DatevField constant</th><th scope="col">Type</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row">1</th><td><code>Umsatz (ohne Soll/Haben-Kz)</code></td><td><code>AMOUNT</code></td><td>Betrag</td></tr>
+                        <tr><th scope="row">2</th><td><code>Soll/Haben-Kennzeichen</code></td><td><code>DEBIT_CREDIT_FLAG</code></td><td>Text</td></tr>
+                        <tr><th scope="row">7</th><td><code>Konto</code></td><td><code>ACCOUNT</code></td><td>Konto</td></tr>
+                        <tr><th scope="row">8</th><td><code>Gegenkonto (ohne BU-Schlüssel)</code></td><td><code>CONTRA_ACCOUNT</code></td><td>Konto</td></tr>
+                        <tr><th scope="row">10</th><td><code>Belegdatum</code></td><td><code>DOCUMENT_DATE</code></td><td>Datum</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="repeating">
+                    <h2>Repeating groups and one spelling trap</h2>
+                    <p>Two column families repeat as type/content pairs. Supplying one half without the other is reported as <code>DEPENDENT_FIELD_MISSING</code> in strict mode.</p>
+                    <ul>
+                        <li><code>Beleginfo - Art 1</code> … <code>Beleginfo - Inhalt 8</code> — eight pairs, fields 21–36.</li>
+                        <li><code>Zusatzinformation - Art 1</code> … <code>Zusatzinformation- Inhalt 20</code> — twenty pairs, fields 48–87.</li>
+                    </ul>
+                    <div class="callout tip">
+                        <strong>Mind the space</strong>
+                        <p>DATEV spells the pair inconsistently: <code>Zusatzinformation - Art 1</code> has spaces around the dash, but <code>Zusatzinformation- Inhalt 1</code> has none. Both spellings are reproduced exactly. Use the <code>DatevField</code> constants and a typo becomes a compile error instead of a rejected file.</p>
+                    </div>
+                </section>
+
+                <section id="table">
+                    <h2>Full field table</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <caption>DATEV Buchungsstapel columns, format version 13, in output order</caption>
+                            <thead><tr><th scope="col">#</th><th scope="col">Official heading</th><th scope="col">DatevField constant</th><th scope="col">Type</th><th scope="col">Max. length</th><th scope="col">Decimals</th><th scope="col">Required</th><th scope="col">In v12</th></tr></thead>
+                            <tbody>
+                        <tr><th scope="row">1</th><td><code>Umsatz (ohne Soll/Haben-Kz)</code></td><td><code>AMOUNT</code></td><td>Betrag</td><td>10</td><td>2</td><td>yes</td><td>yes</td></tr>
+                        <tr><th scope="row">2</th><td><code>Soll/Haben-Kennzeichen</code></td><td><code>DEBIT_CREDIT_FLAG</code></td><td>Text</td><td>1</td><td>—</td><td>yes</td><td>yes</td></tr>
+                        <tr><th scope="row">3</th><td><code>WKZ Umsatz</code></td><td><code>CURRENCY</code></td><td>Text</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">4</th><td><code>Kurs</code></td><td><code>EXCHANGE_RATE</code></td><td>Zahl</td><td>5</td><td>6</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">5</th><td><code>Basis-Umsatz</code></td><td><code>BASE_AMOUNT</code></td><td>Betrag</td><td>10</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">6</th><td><code>WKZ Basis-Umsatz</code></td><td><code>BASE_CURRENCY</code></td><td>Text</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">7</th><td><code>Konto</code></td><td><code>ACCOUNT</code></td><td>Konto</td><td>9</td><td>—</td><td>yes</td><td>yes</td></tr>
+                        <tr><th scope="row">8</th><td><code>Gegenkonto (ohne BU-Schlüssel)</code></td><td><code>CONTRA_ACCOUNT</code></td><td>Konto</td><td>9</td><td>—</td><td>yes</td><td>yes</td></tr>
+                        <tr><th scope="row">9</th><td><code>BU-Schlüssel</code></td><td><code>POSTING_KEY</code></td><td>Text</td><td>4</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">10</th><td><code>Belegdatum</code></td><td><code>DOCUMENT_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>yes</td><td>yes</td></tr>
+                        <tr><th scope="row">11</th><td><code>Belegfeld 1</code></td><td><code>DOCUMENT_FIELD_1</code></td><td>Text</td><td>36</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">12</th><td><code>Belegfeld 2</code></td><td><code>DOCUMENT_FIELD_2</code></td><td>Text</td><td>12</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">13</th><td><code>Skonto</code></td><td><code>CASH_DISCOUNT</code></td><td>Betrag</td><td>8</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">14</th><td><code>Buchungstext</code></td><td><code>POSTING_TEXT</code></td><td>Text</td><td>60</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">15</th><td><code>Postensperre</code></td><td><code>ITEM_BLOCK</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">16</th><td><code>Diverse Adressnummer</code></td><td><code>MISC_ADDRESS_NUMBER</code></td><td>Text</td><td>9</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">17</th><td><code>Geschäftspartnerbank</code></td><td><code>PARTNER_BANK</code></td><td>Zahl</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">18</th><td><code>Sachverhalt</code></td><td><code>MATTER_CODE</code></td><td>Zahl</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">19</th><td><code>Zinssperre</code></td><td><code>INTEREST_BLOCK</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">20</th><td><code>Beleglink</code></td><td><code>DOCUMENT_LINK</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">21</th><td><code>Beleginfo - Art 1</code></td><td><code>DOCUMENT_INFO_TYPE_1</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">22</th><td><code>Beleginfo - Inhalt 1</code></td><td><code>DOCUMENT_INFO_CONTENT_1</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">23</th><td><code>Beleginfo - Art 2</code></td><td><code>DOCUMENT_INFO_TYPE_2</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">24</th><td><code>Beleginfo - Inhalt 2</code></td><td><code>DOCUMENT_INFO_CONTENT_2</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">25</th><td><code>Beleginfo - Art 3</code></td><td><code>DOCUMENT_INFO_TYPE_3</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">26</th><td><code>Beleginfo - Inhalt 3</code></td><td><code>DOCUMENT_INFO_CONTENT_3</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">27</th><td><code>Beleginfo - Art 4</code></td><td><code>DOCUMENT_INFO_TYPE_4</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">28</th><td><code>Beleginfo - Inhalt 4</code></td><td><code>DOCUMENT_INFO_CONTENT_4</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">29</th><td><code>Beleginfo - Art 5</code></td><td><code>DOCUMENT_INFO_TYPE_5</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">30</th><td><code>Beleginfo - Inhalt 5</code></td><td><code>DOCUMENT_INFO_CONTENT_5</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">31</th><td><code>Beleginfo - Art 6</code></td><td><code>DOCUMENT_INFO_TYPE_6</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">32</th><td><code>Beleginfo - Inhalt 6</code></td><td><code>DOCUMENT_INFO_CONTENT_6</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">33</th><td><code>Beleginfo - Art 7</code></td><td><code>DOCUMENT_INFO_TYPE_7</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">34</th><td><code>Beleginfo - Inhalt 7</code></td><td><code>DOCUMENT_INFO_CONTENT_7</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">35</th><td><code>Beleginfo - Art 8</code></td><td><code>DOCUMENT_INFO_TYPE_8</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">36</th><td><code>Beleginfo - Inhalt 8</code></td><td><code>DOCUMENT_INFO_CONTENT_8</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">37</th><td><code>KOST1 - Kostenstelle</code></td><td><code>COST_CENTER_1</code></td><td>Text</td><td>36</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">38</th><td><code>KOST2 - Kostenstelle</code></td><td><code>COST_CENTER_2</code></td><td>Text</td><td>36</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">39</th><td><code>Kost-Menge</code></td><td><code>COST_QUANTITY</code></td><td>Zahl</td><td>12</td><td>4</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">40</th><td><code>EU-Land u. UStID (Bestimmung)</code></td><td><code>EU_COUNTRY_VAT_ID_DESTINATION</code></td><td>Text</td><td>15</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">41</th><td><code>EU-Steuersatz (Bestimmung)</code></td><td><code>EU_TAX_RATE_DESTINATION</code></td><td>Zahl</td><td>2</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">42</th><td><code>Abw. Versteuerungsart</code></td><td><code>DIFFERING_TAXATION_TYPE</code></td><td>Text</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">43</th><td><code>Sachverhalt L+L</code></td><td><code>MATTER_CODE_LL</code></td><td>Zahl</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">44</th><td><code>Funktionsergänzung L+L</code></td><td><code>FUNCTION_SUPPLEMENT_LL</code></td><td>Zahl</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">45</th><td><code>BU 49 Hauptfunktionstyp</code></td><td><code>BU49_MAIN_FUNCTION_TYPE</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">46</th><td><code>BU 49 Hauptfunktionsnummer</code></td><td><code>BU49_MAIN_FUNCTION_NUMBER</code></td><td>Zahl</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">47</th><td><code>BU 49 Funktionsergänzung</code></td><td><code>BU49_FUNCTION_SUPPLEMENT</code></td><td>Zahl</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">48</th><td><code>Zusatzinformation - Art 1</code></td><td><code>ADDITIONAL_INFO_TYPE_1</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">49</th><td><code>Zusatzinformation- Inhalt 1</code></td><td><code>ADDITIONAL_INFO_CONTENT_1</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">50</th><td><code>Zusatzinformation - Art 2</code></td><td><code>ADDITIONAL_INFO_TYPE_2</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">51</th><td><code>Zusatzinformation- Inhalt 2</code></td><td><code>ADDITIONAL_INFO_CONTENT_2</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">52</th><td><code>Zusatzinformation - Art 3</code></td><td><code>ADDITIONAL_INFO_TYPE_3</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">53</th><td><code>Zusatzinformation- Inhalt 3</code></td><td><code>ADDITIONAL_INFO_CONTENT_3</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">54</th><td><code>Zusatzinformation - Art 4</code></td><td><code>ADDITIONAL_INFO_TYPE_4</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">55</th><td><code>Zusatzinformation- Inhalt 4</code></td><td><code>ADDITIONAL_INFO_CONTENT_4</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">56</th><td><code>Zusatzinformation - Art 5</code></td><td><code>ADDITIONAL_INFO_TYPE_5</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">57</th><td><code>Zusatzinformation- Inhalt 5</code></td><td><code>ADDITIONAL_INFO_CONTENT_5</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">58</th><td><code>Zusatzinformation - Art 6</code></td><td><code>ADDITIONAL_INFO_TYPE_6</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">59</th><td><code>Zusatzinformation- Inhalt 6</code></td><td><code>ADDITIONAL_INFO_CONTENT_6</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">60</th><td><code>Zusatzinformation - Art 7</code></td><td><code>ADDITIONAL_INFO_TYPE_7</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">61</th><td><code>Zusatzinformation- Inhalt 7</code></td><td><code>ADDITIONAL_INFO_CONTENT_7</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">62</th><td><code>Zusatzinformation - Art 8</code></td><td><code>ADDITIONAL_INFO_TYPE_8</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">63</th><td><code>Zusatzinformation- Inhalt 8</code></td><td><code>ADDITIONAL_INFO_CONTENT_8</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">64</th><td><code>Zusatzinformation - Art 9</code></td><td><code>ADDITIONAL_INFO_TYPE_9</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">65</th><td><code>Zusatzinformation- Inhalt 9</code></td><td><code>ADDITIONAL_INFO_CONTENT_9</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">66</th><td><code>Zusatzinformation - Art 10</code></td><td><code>ADDITIONAL_INFO_TYPE_10</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">67</th><td><code>Zusatzinformation- Inhalt 10</code></td><td><code>ADDITIONAL_INFO_CONTENT_10</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">68</th><td><code>Zusatzinformation - Art 11</code></td><td><code>ADDITIONAL_INFO_TYPE_11</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">69</th><td><code>Zusatzinformation- Inhalt 11</code></td><td><code>ADDITIONAL_INFO_CONTENT_11</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">70</th><td><code>Zusatzinformation - Art 12</code></td><td><code>ADDITIONAL_INFO_TYPE_12</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">71</th><td><code>Zusatzinformation- Inhalt 12</code></td><td><code>ADDITIONAL_INFO_CONTENT_12</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">72</th><td><code>Zusatzinformation - Art 13</code></td><td><code>ADDITIONAL_INFO_TYPE_13</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">73</th><td><code>Zusatzinformation- Inhalt 13</code></td><td><code>ADDITIONAL_INFO_CONTENT_13</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">74</th><td><code>Zusatzinformation - Art 14</code></td><td><code>ADDITIONAL_INFO_TYPE_14</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">75</th><td><code>Zusatzinformation- Inhalt 14</code></td><td><code>ADDITIONAL_INFO_CONTENT_14</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">76</th><td><code>Zusatzinformation - Art 15</code></td><td><code>ADDITIONAL_INFO_TYPE_15</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">77</th><td><code>Zusatzinformation- Inhalt 15</code></td><td><code>ADDITIONAL_INFO_CONTENT_15</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">78</th><td><code>Zusatzinformation - Art 16</code></td><td><code>ADDITIONAL_INFO_TYPE_16</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">79</th><td><code>Zusatzinformation- Inhalt 16</code></td><td><code>ADDITIONAL_INFO_CONTENT_16</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">80</th><td><code>Zusatzinformation - Art 17</code></td><td><code>ADDITIONAL_INFO_TYPE_17</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">81</th><td><code>Zusatzinformation- Inhalt 17</code></td><td><code>ADDITIONAL_INFO_CONTENT_17</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">82</th><td><code>Zusatzinformation - Art 18</code></td><td><code>ADDITIONAL_INFO_TYPE_18</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">83</th><td><code>Zusatzinformation- Inhalt 18</code></td><td><code>ADDITIONAL_INFO_CONTENT_18</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">84</th><td><code>Zusatzinformation - Art 19</code></td><td><code>ADDITIONAL_INFO_TYPE_19</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">85</th><td><code>Zusatzinformation- Inhalt 19</code></td><td><code>ADDITIONAL_INFO_CONTENT_19</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">86</th><td><code>Zusatzinformation - Art 20</code></td><td><code>ADDITIONAL_INFO_TYPE_20</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">87</th><td><code>Zusatzinformation- Inhalt 20</code></td><td><code>ADDITIONAL_INFO_CONTENT_20</code></td><td>Text</td><td>210</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">88</th><td><code>Stück</code></td><td><code>PIECES</code></td><td>Zahl</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">89</th><td><code>Gewicht</code></td><td><code>WEIGHT</code></td><td>Zahl</td><td>8</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">90</th><td><code>Zahlweise</code></td><td><code>PAYMENT_METHOD</code></td><td>Zahl</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">91</th><td><code>Forderungsart</code></td><td><code>RECEIVABLE_TYPE</code></td><td>Text</td><td>10</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">92</th><td><code>Veranlagungsjahr</code></td><td><code>ASSESSMENT_YEAR</code></td><td>Zahl</td><td>4</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">93</th><td><code>Zugeordnete Fälligkeit</code></td><td><code>ASSIGNED_DUE_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">94</th><td><code>Skontotyp</code></td><td><code>CASH_DISCOUNT_TYPE</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">95</th><td><code>Auftragsnummer</code></td><td><code>ORDER_NUMBER</code></td><td>Text</td><td>30</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">96</th><td><code>Buchungstyp</code></td><td><code>POSTING_TYPE</code></td><td>Text</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">97</th><td><code>USt-Schlüssel (Anzahlungen)</code></td><td><code>VAT_KEY_PREPAYMENT</code></td><td>Zahl</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">98</th><td><code>EU-Land (Anzahlungen)</code></td><td><code>EU_COUNTRY_PREPAYMENT</code></td><td>Text</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">99</th><td><code>Sachverhalt L+L (Anzahlungen)</code></td><td><code>MATTER_CODE_LL_PREPAYMENT</code></td><td>Zahl</td><td>3</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">100</th><td><code>EU-Steuersatz (Anzahlungen)</code></td><td><code>EU_TAX_RATE_PREPAYMENT</code></td><td>Zahl</td><td>2</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">101</th><td><code>Erlöskonto (Anzahlungen)</code></td><td><code>REVENUE_ACCOUNT_PREPAYMENT</code></td><td>Konto</td><td>9</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">102</th><td><code>Herkunft-Kz</code></td><td><code>ORIGIN_CODE</code></td><td>Text</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">103</th><td><code>Buchungs GUID</code></td><td><code>POSTING_GUID</code></td><td>Text</td><td>36</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">104</th><td><code>KOST-Datum</code></td><td><code>COST_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">105</th><td><code>SEPA-Mandatsreferenz</code></td><td><code>SEPA_MANDATE_REFERENCE</code></td><td>Text</td><td>35</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">106</th><td><code>Skontosperre</code></td><td><code>CASH_DISCOUNT_BLOCK</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">107</th><td><code>Gesellschaftername</code></td><td><code>SHAREHOLDER_NAME</code></td><td>Text</td><td>76</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">108</th><td><code>Beteiligtennummer</code></td><td><code>PARTICIPANT_NUMBER</code></td><td>Zahl</td><td>4</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">109</th><td><code>Identifikationsnummer</code></td><td><code>IDENTIFICATION_NUMBER</code></td><td>Text</td><td>11</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">110</th><td><code>Zeichnernummer</code></td><td><code>SUBSCRIBER_NUMBER</code></td><td>Text</td><td>20</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">111</th><td><code>Postensperre bis</code></td><td><code>ITEM_BLOCK_UNTIL</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">112</th><td><code>Bezeichnung SoBil-Sachverhalt</code></td><td><code>SOBIL_MATTER_LABEL</code></td><td>Text</td><td>30</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">113</th><td><code>Kennzeichen SoBil-Buchung</code></td><td><code>SOBIL_POSTING_FLAG</code></td><td>Zahl</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">114</th><td><code>Festschreibung</code></td><td><code>FINAL_POSTING_FLAG</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">115</th><td><code>Leistungsdatum</code></td><td><code>SERVICE_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">116</th><td><code>Datum Zuord. Steuerperiode</code></td><td><code>TAX_PERIOD_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">117</th><td><code>Fälligkeit</code></td><td><code>DUE_DATE</code></td><td>Datum</td><td>8</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">118</th><td><code>Generalumkehr (GU)</code></td><td><code>GENERAL_REVERSAL</code></td><td>Text</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">119</th><td><code>Steuersatz</code></td><td><code>TAX_RATE</code></td><td>Zahl</td><td>2</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">120</th><td><code>Land</code></td><td><code>COUNTRY</code></td><td>Text</td><td>2</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">121</th><td><code>Abrechnungsreferenz</code></td><td><code>SETTLEMENT_REFERENCE</code></td><td>Text</td><td>50</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">122</th><td><code>BVV-Position</code></td><td><code>BVV_POSITION</code></td><td>Zahl</td><td>1</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">123</th><td><code>EU-Land u. UStID (Ursprung)</code></td><td><code>EU_COUNTRY_VAT_ID_ORIGIN</code></td><td>Text</td><td>15</td><td>—</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">124</th><td><code>EU-Steuersatz (Ursprung)</code></td><td><code>EU_TAX_RATE_ORIGIN</code></td><td>Zahl</td><td>2</td><td>2</td><td>no</td><td>yes</td></tr>
+                        <tr><th scope="row">125</th><td><code>Abw. Skontokonto</code></td><td><code>DIFFERING_CASH_DISCOUNT_ACCOUNT</code></td><td>Konto</td><td>8</td><td>—</td><td>no</td><td>no</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="usage">
+                    <h2>Addressing a field from Java</h2>
+                    <p>Every <code>DatevColumn</code> factory accepts either the enum constant or the raw heading string, and both produce identical output. The constant is checked at compile time.</p>
+<pre><code>import io.github.mrtyldr.datev.core.DatevColumn;
+import io.github.mrtyldr.datev.core.DatevField;
+import io.github.mrtyldr.datev.core.DatevSchema;
+
+// Field 7, "Konto" — compile-checked.
+DatevColumn account = DatevColumn.account(DatevField.ACCOUNT, 1000);
+
+// Identical output, but a typo would only surface at runtime.
+DatevColumn same = DatevColumn.account("Konto", 1000);
+
+int number = DatevField.ACCOUNT.fieldNumber();                     // 7
+String heading = DatevField.ACCOUNT.heading();                     // "Konto"
+boolean inLegacy = DatevField.DIFFERING_CASH_DISCOUNT_ACCOUNT
+        .isPresentIn(DatevSchema.LEGACY_V12);                      // false</code></pre>
+                    <p><code>DatevField</code> constants are declared in output order, so <code>ordinal() + 1</code> is the DATEV field number, and <code>isPresentIn(DatevSchema.LEGACY_V12)</code> answers the version-12 question for any field.</p>
+                </section>
+
+                <section id="related">
+                    <h2>Related references</h2>
+                    <ul>
+            <li><a href="validation-errors.html">Validation errors — the six error codes explained</a></li>
+            <li><a href="extf-header.html">EXTF header — the 31-field management record</a></li>
+            <li><a href="encoding.html">Encoding — Windows-1252, CRLF, quoting and umlauts</a></li>
+                    </ul>
+                </section>
+            </article>
+        </div>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer-grid">
+        <p><strong>Independent open-source project.</strong> Not affiliated with, endorsed by or supported by DATEV. DATEV is a trademark of DATEV eG. Output is an import candidate, not a promise of acceptance.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="https://github.com/mrtyldr/datev-exporter">GitHub</a>
+            <a href="reference.html">Reference</a>
+            <a href="/datev-exporter/api/0.2.0/">API 0.2.0</a>
+            <a href="/datev-exporter/llms.txt">llms.txt</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
