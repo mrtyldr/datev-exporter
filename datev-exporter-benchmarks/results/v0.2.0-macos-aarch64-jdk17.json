@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-12",
+  "libraryUnderTest": {
+    "version": "0.2.0",
+    "gitCommit": "06fa7ae238990d579ae3f7f40f64260d421a94fb"
+  },
+  "environment": {
+    "os": "macOS 26.5.2 (25F84)",
+    "architecture": "aarch64",
+    "cpu": "Apple M1 Pro",
+    "logicalCpuCount": 10,
+    "memoryBytes": 34359738368,
+    "jdk": "Eclipse Temurin 17.0.19+10",
+    "jmhVersion": "1.37",
+    "gradleVersion": "9.6.0"
+  },
+  "configuration": {
+    "benchmarkMode": "AverageTime",
+    "scoreUnit": "ms/op",
+    "threads": 1,
+    "forks": 2,
+    "warmupIterationsPerFork": 3,
+    "warmupTimeSeconds": 1,
+    "measurementIterationsPerFork": 5,
+    "measurementTimeSeconds": 1,
+    "forkJvmArguments": ["-Xms1g", "-Xmx1g", "-XX:+AlwaysPreTouch"],
+    "profiler": "gc",
+    "rowsPerOperation": 99999,
+    "schema": "DATEV Buchungsstapel EXTF v13",
+    "columnsPerRow": 125,
+    "nonEmptyColumnsPerRow": 6,
+    "validationMode": "STRICT",
+    "emittedBytesPerOperation": 33602459,
+    "fixedManagementAndHeadingBytes": 2795,
+    "encodedBytesPerBookingRow": 336,
+    "destination": "pre-sized reusable ByteArrayOutputStream",
+    "diskIoIncluded": false,
+    "fixture": "The same immutable six-entry Map is submitted for every row; exporters still align, validate and serialize every append."
+  },
+  "reproductionCommand": "./gradlew --no-daemon :datev-exporter-benchmarks:jmhMaxRows",
+  "confidenceInterval": "99.9% JMH score error",
+  "results": [
+    {
+      "benchmark": "advancedRetainedFile",
+      "scoreMsPerOperation": 742.9758834,
+      "scoreErrorMsPerOperation": 51.878238251840244,
+      "derivedMicrosecondsPerRow": 7.429833132331324,
+      "derivedRowsPerSecond": 134592.52478342285,
+      "allocationBytesPerOperation": 966056224.0,
+      "allocationErrorBytesPerOperation": 10710041.012212412,
+      "derivedAllocationBytesPerRow": 9660.658846588465,
+      "rawScoreMsPerOperation": [
+        [740.0864585, 776.364708, 823.566729, 733.387979, 753.7533335],
+        [731.749438, 716.579875, 720.084271, 710.5959585, 723.5900835]
+      ],
+      "rawAllocationBytesPerOperation": [
+        [962696036, 962696068, 962696084, 962696068, 979497308],
+        [962695900, 962695900, 962695868, 962695868, 979497140]
+      ]
+    },
+    {
+      "benchmark": "plainForwardOnlyStream",
+      "scoreMsPerOperation": 670.19324165,
+      "scoreErrorMsPerOperation": 34.909682924843594,
+      "derivedMicrosecondsPerRow": 6.701999436494365,
+      "derivedRowsPerSecond": 149209.20383172593,
+      "allocationBytesPerOperation": 980975802.8,
+      "allocationErrorBytesPerOperation": 10710035.592899302,
+      "derivedAllocationBytesPerRow": 9809.856126561264,
+      "rawScoreMsPerOperation": [
+        [641.1259375, 676.9953545, 695.778229, 660.563354, 666.6241665],
+        [663.0384165, 661.045604, 660.1939795, 654.683437, 721.883938]
+      ],
+      "rawAllocationBytesPerOperation": [
+        [977615556, 977615576, 977615556, 977615556, 994416796],
+        [977615556, 977615556, 977615556, 977615524, 994416796]
+      ]
+    },
+    {
+      "benchmark": "plainRetainedFile",
+      "scoreMsPerOperation": 670.0001855,
+      "scoreErrorMsPerOperation": 15.06767743734809,
+      "derivedMicrosecondsPerRow": 6.700068855688557,
+      "derivedRowsPerSecond": 149252.19748316024,
+      "allocationBytesPerOperation": 1011067253.6,
+      "allocationErrorBytesPerOperation": 10710046.110911189,
+      "derivedAllocationBytesPerRow": 10110.773643736438,
+      "rawScoreMsPerOperation": [
+        [679.315563, 667.6226875, 674.1392085, 659.17275, 664.4415205],
+        [664.8797915, 667.2275835, 664.814542, 693.449021, 664.9391875]
+      ],
+      "rawAllocationBytesPerOperation": [
+        [1007707020, 1007707020, 1007706988, 1007706988, 1024508260],
+        [1007706988, 1007707020, 1007706988, 1007707004, 1024508260]
+      ]
+    }
+  ]
+}

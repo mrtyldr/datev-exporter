@@ -42,6 +42,34 @@ tasks.register('jmhSmoke', JavaExec) {
     args '-wi', '0', '-i', '1', '-f', '1', '-r', '100ms'
 }
 
+def maxRowsResultFile = layout.buildDirectory.file('results/jmh/max-rows-gc.json')
+def java17Launcher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(17)
+    vendor = JvmVendorSpec.ADOPTIUM
+}
+tasks.register('jmhMaxRows', JavaExec) {
+    group = 'verification'
+    description = 'Benchmarks a complete 99,999-row EXTF file with JMH allocation profiling.'
+    dependsOn jmhJarTask
+    classpath = files(jmhJarTask.flatMap { it.archiveFile })
+    mainClass = 'org.openjdk.jmh.Main'
+    javaLauncher = java17Launcher
+    args 'io.github.mrtyldr.datev.benchmark.CompleteExtfWritingBenchmark.*',
+            '-p', 'rowCount=99999',
+            '-wi', '3', '-i', '5',
+            '-w', '1s', '-r', '1s',
+            '-f', '2', '-t', '1',
+            '-jvmArgs', '-Xms1g -Xmx1g -XX:+AlwaysPreTouch',
+            '-prof', 'gc', '-rf', 'json'
+    doFirst {
+        def resultFile = maxRowsResultFile.get().asFile
+        resultFile.parentFile.mkdirs()
+        args '-rff', resultFile.absolutePath
+    }
+    outputs.file(maxRowsResultFile)
+    outputs.upToDateWhen { false }
+}
+
 def nonPublishableMessage =
         "${project.path} is an internal benchmark module and must never be published."
 plugins.withId('datev.publish-conventions') {

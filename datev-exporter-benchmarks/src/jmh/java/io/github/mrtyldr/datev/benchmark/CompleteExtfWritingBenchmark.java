@@ -43,7 +43,7 @@ import java.util.function.ToIntFunction;
 public class CompleteExtfWritingBenchmark {
 
     /** Number of booking rows written in one benchmark invocation. */
-    @Param({"1", "1000"})
+    @Param({"1", "1000", "99999"})
     public int rowCount;
 
     private DatevMetadata metadata;
