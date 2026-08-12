@@ -256,7 +256,7 @@ public final class DatevFile implements Iterable<List<String>> {
      */
     public void append(String semicolonSeparatedRow) {
         Objects.requireNonNull(semicolonSeparatedRow, "semicolonSeparatedRow");
-        rejectControlCharacters(semicolonSeparatedRow, "CSV row");
+        DatevCsv.rejectControlCharacters(semicolonSeparatedRow, "CSV row");
         validateCsvRowSyntax(semicolonSeparatedRow);
         append(DatevCsv.parseRecord(semicolonSeparatedRow).toArray(String[]::new));
 
@@ -532,24 +532,13 @@ public final class DatevFile implements Iterable<List<String>> {
 
     private static String validateCell(String value, String headerIdentifier) {
         if (value != null) {
-            rejectControlCharacters(value, "value for DATEV header '" + headerIdentifier + "'");
+            // The advanced exporter checks record structure only; unlike the plain exporter it
+            // leaves Windows-1252 encodability to the configured CodingErrorAction, so this stays
+            // on rejectControlCharacters rather than moving to requireExportable.
+            DatevCsv.rejectControlCharacters(value,
+                    "value for DATEV header '" + headerIdentifier + "'");
         }
         return value;
-    }
-
-    private static void rejectControlCharacters(String value, String description) {
-        for (int offset = 0; offset < value.length(); ) {
-            int codePoint = value.codePointAt(offset);
-            int type = Character.getType(codePoint);
-            if (Character.isISOControl(codePoint)
-                    || type == Character.LINE_SEPARATOR
-                    || type == Character.PARAGRAPH_SEPARATOR) {
-                throw new IllegalArgumentException(
-                        description + " must not contain control or line-separator characters."
-                );
-            }
-            offset += Character.charCount(codePoint);
-        }
     }
 
     private static void validateCsvRowSyntax(String row) {

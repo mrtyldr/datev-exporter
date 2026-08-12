@@ -4,7 +4,7 @@ plugins {
     id 'java-test-fixtures'
 }
 
-description = 'The shared zero-third-party-dependency DATEV Buchungsstapel schema and validation core.'
+description = 'The shared Java 17 DATEV Buchungsstapel v13/v12 schema, EXTF metadata, CSV codec and validation core.'
 ext.datevModuleName = 'io.github.mrtyldr.datev.core'
 
 // Test fixtures are an internal build-time convenience; they are not part of the published API.

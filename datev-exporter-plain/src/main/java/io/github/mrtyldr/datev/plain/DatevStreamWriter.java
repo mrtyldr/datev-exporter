@@ -27,8 +27,12 @@ import java.util.function.BiConsumer;
  * Both records are written when the writer is constructed.
  *
  * <p>Each append is fully aligned, formatted, structurally checked, optionally validated and
- * serialized in row-local memory before output begins. Successfully written rows are discarded, so
- * library-managed working memory is proportional to the largest row instead of the total row count.
+ * serialized in row-local memory before output begins. Every completed record is then handed to
+ * the destination immediately; this writer does not batch records or retain serialization buffers
+ * between appends. Successfully written rows are discarded, so library-managed working memory is
+ * proportional to one row instead of the total row count. Byte-stream output uses one temporary
+ * encoded byte array per record. Callers decide whether the destination itself should buffer those
+ * writes by supplying, for example, a {@code BufferedOutputStream}.
  * The supplied output remains caller-owned: during normal completion {@link #close()} flushes it
  * but does not close it. After a destination failure, close does not retry a flush. Byte-stream
  * factories emit Windows-1252 directly; callers supplying a character {@link Writer} remain
@@ -391,7 +395,11 @@ public final class DatevStreamWriter implements AutoCloseable {
         appendPrepared(() -> rowAssembler.fromColumns(columns));
     }
 
-    /** Flushes completed records without closing the caller-owned destination. */
+    /**
+     * Flushes completed records without closing the caller-owned destination.
+     *
+     * @throws UncheckedIOException if the destination rejects the flush
+     */
     public void flush() {
         ensureOpen("flush");
         try {
@@ -410,9 +418,14 @@ public final class DatevStreamWriter implements AutoCloseable {
     }
 
     /**
-     * Flushes completed records and makes this writer terminal without closing the destination.
-     * Repeated calls have no effect. If a previous destination operation failed, this method does
-     * not retry flushing potentially partial output.
+     * Flushes completed records and makes this writer terminal without closing the caller-owned
+     * destination.
+     *
+     * <p>Repeated calls have no effect. If a previous destination operation failed, this method
+     * does not retry flushing potentially partial output, and it does not close the destination
+     * either.
+     *
+     * @throws UncheckedIOException if the destination rejects the flush
      */
     @Override
     public void close() {

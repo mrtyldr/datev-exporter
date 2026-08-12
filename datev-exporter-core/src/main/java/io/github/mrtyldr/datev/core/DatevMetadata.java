@@ -51,6 +51,7 @@ public final class DatevMetadata {
     private static final Pattern DICTATION_CODE_PATTERN = Pattern.compile("(?:[A-Z]{2}){0,2}");
     private static final Pattern CHART_OF_ACCOUNTS_PATTERN = Pattern.compile("(?:[0-9]{2}){0,2}");
     private static final Pattern INDUSTRY_SOLUTION_PATTERN = Pattern.compile("[0-9]{0,4}");
+    private static final Pattern CURRENCY_CODE_PATTERN = Pattern.compile("[A-Z]{3}");
 
     private static final boolean[] QUOTED_FIELDS = {
             true, false, false, true, false, false, false, true, true, true,
@@ -502,7 +503,7 @@ public final class DatevMetadata {
         if (value == null) {
             throw new IllegalArgumentException("Application information must not be null.");
         }
-        rejectControlCharacters(value, "Application information");
+        DatevCsv.requireExportable(value, "Application information");
         int length = value.codePointCount(0, value.length());
         if (length > 16) {
             throw new IllegalArgumentException(
@@ -835,7 +836,7 @@ public final class DatevMetadata {
                 throw new IllegalArgumentException("Currency must not be null.");
             }
             String currencyCode = currency.getCurrencyCode();
-            if (!currencyCode.matches("[A-Z]{3}")) {
+            if (!CURRENCY_CODE_PATTERN.matcher(currencyCode).matches()) {
                 throw new IllegalArgumentException("Currency code must contain three uppercase letters.");
             }
             this.currency = currency;
@@ -877,7 +878,8 @@ public final class DatevMetadata {
         /**
          * Sets the optional issuing-application identifier.
          *
-         * @param applicationInformation up to 16 non-control characters
+         * @param applicationInformation up to 16 Windows-1252 characters without controls or line
+         *     separators
          * @return this builder
          */
         public Builder applicationInformation(String applicationInformation) {

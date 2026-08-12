@@ -3,7 +3,7 @@ plugins {
     id 'datev.publish-conventions'
 }
 
-description = 'Univocity interoperability for the advanced DATEV Buchungsstapel exporter.'
+description = 'Univocity CsvWriter interoperability for DATEV Buchungsstapel v13/v12 heading-and-booking-row output and custom CSV schemas.'
 ext.datevModuleName = 'io.github.mrtyldr.datev.advanced.univocity'
 
 dependencies {

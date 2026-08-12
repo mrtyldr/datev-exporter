@@ -275,14 +275,16 @@ class DatevMetadataTest {
                 () -> assertThrows(IllegalArgumentException.class,
                         () -> minimalBuilder().applicationInformation("line\nbreak")),
                 () -> assertThrows(IllegalArgumentException.class,
-                        () -> minimalBuilder().applicationInformation("line\u2028break"))
+                        () -> minimalBuilder().applicationInformation("line\u2028break")),
+                () -> assertThrows(IllegalArgumentException.class,
+                        () -> minimalBuilder().applicationInformation("🙂"))
         );
 
         DatevMetadata metadata = minimalBuilder()
-                .applicationInformation("a;\"b")
+                .applicationInformation("Müller €;\"b")
                 .build();
 
-        assertTrue(metadata.toCsvLine().endsWith(";\"a;\"\"b\""));
+        assertTrue(metadata.toCsvLine().endsWith(";\"Müller €;\"\"b\""));
     }
 
     @Test

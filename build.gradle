@@ -3,7 +3,7 @@ plugins {
     id 'datev.publish-conventions'
 }
 
-description = 'A Bill of Materials aligning every datev-exporter module on one version.'
+description = 'A Bill of Materials aligning the Java 17 DATEV Buchungsstapel and EXTF exporter modules.'
 
 dependencies {
     constraints {

@@ -219,9 +219,13 @@ class DatevStreamWriterTest {
         int charactersAfterFailure = output.delegate.getBuffer().length();
         assertEquals(0, streaming.rowCount());
         assertThrows(IllegalStateException.class, () -> streaming.append(Map.of("Konto", "2000")));
+        assertThrows(IllegalStateException.class, streaming::flush);
         assertEquals(charactersAfterFailure, output.delegate.getBuffer().length());
+
         streaming.close();
+        assertEquals(charactersAfterFailure, output.delegate.getBuffer().length());
         assertEquals(0, output.flushes);
+        assertFalse(output.closed);
     }
 
     @Test
@@ -335,6 +339,7 @@ class DatevStreamWriterTest {
         private final StringWriter delegate = new StringWriter();
         private int writes;
         private int flushes;
+        private boolean closed;
 
         @Override
         public void write(char[] buffer, int offset, int length) throws IOException {
@@ -355,6 +360,7 @@ class DatevStreamWriterTest {
 
         @Override
         public void close() {
+            closed = true;
         }
     }
 

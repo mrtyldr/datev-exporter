@@ -3,7 +3,7 @@ plugins {
     id 'datev.publish-conventions'
 }
 
-description = 'A Java library for creating validated DATEV Buchungsstapel v13 CSV files.'
+description = 'A Java 17 DATEV Buchungsstapel v13/v12 writer with built-in validation and optional custom downstream CSV headers.'
 ext.datevModuleName = 'io.github.mrtyldr.datev.advanced'
 
 dependencies {

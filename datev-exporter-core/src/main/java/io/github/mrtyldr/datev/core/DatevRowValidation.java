@@ -1,6 +1,5 @@
 package io.github.mrtyldr.datev.core;
 
-import java.nio.charset.Charset;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.MonthDay;
@@ -55,6 +54,7 @@ public final class DatevRowValidation {
     private static final Pattern WORD = Pattern.compile("[A-Za-z0-9_]*");
     private static final Pattern WORD_AND_SPACE = Pattern.compile("[A-Za-z0-9_ ]*");
     private static final Pattern UPPERCASE_TWO = Pattern.compile("[A-Z]{2}");
+    private static final Pattern UPPERCASE_THREE = Pattern.compile("[A-Z]{3}");
     private static final DateTimeFormatter FULL_DATE_FORMATTER =
             DateTimeFormatter.ofPattern("ddMMuuuu", Locale.ROOT)
                     .withResolverStyle(ResolverStyle.STRICT);
@@ -87,7 +87,6 @@ public final class DatevRowValidation {
             DEVIATING_DISCOUNT_ACCOUNT
     );
     private static final Set<String> SPECIFIC_RULE_KEYS = specificRuleKeys();
-    private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
 
     private DatevRowValidation() {
     }
@@ -115,16 +114,71 @@ public final class DatevRowValidation {
             boolean officialSchema
     ) {
         Objects.requireNonNull(canonicalKeys, "canonicalKeys");
+        requireCommonArguments(canonicalKeys.size(), values, mode, context);
+        // Runs before the mode check because indexing also rejects null and duplicated keys, which
+        // every mode reports. The list is caller-owned and may be mutable, so it is re-indexed on
+        // every call.
+        return validateIndexed(canonicalKeys, indexCanonicalKeys(canonicalKeys), values, mode,
+                context, officialSchema);
+    }
+
+    /**
+     * Validates one row whose canonical keys have already been indexed by their immutable owner.
+     *
+     * <p>Skipping {@code indexCanonicalKeys} also skips its null and duplicate key rejection. That
+     * is safe precisely because the only callers are {@link DatevSchema} and {@link DatevHeader},
+     * which build their index maps once during construction and reject null, duplicated and
+     * colliding keys there; a row can therefore never reach this method with keys that the public
+     * {@code List}-based overload would have rejected. Any future caller must uphold the same
+     * invariant.
+     *
+     * @param canonicalKeys stable canonical keys in the row's output order
+     * @param canonicalKeyIndexes the owner's immutable key-to-index map for exactly those keys
+     * @param values logical, unquoted cell values in the same order
+     * @param mode validation depth
+     * @param context optional metadata-dependent constraints, never {@code null}
+     * @param officialSchema whether the keys form a complete official v12 or v13 schema
+     * @return immutable validation errors ordered by DATEV field number
+     */
+    static List<DatevValidationError> validate(
+            List<String> canonicalKeys,
+            Map<String, Integer> canonicalKeyIndexes,
+            List<String> values,
+            DatevValidationMode mode,
+            DatevValidationContext context,
+            boolean officialSchema
+    ) {
+        Objects.requireNonNull(canonicalKeys, "canonicalKeys");
+        Objects.requireNonNull(canonicalKeyIndexes, "canonicalKeyIndexes");
+        requireCommonArguments(canonicalKeys.size(), values, mode, context);
+        return validateIndexed(canonicalKeys, canonicalKeyIndexes, values, mode, context,
+                officialSchema);
+    }
+
+    private static void requireCommonArguments(
+            int keyCount,
+            List<String> values,
+            DatevValidationMode mode,
+            DatevValidationContext context
+    ) {
         Objects.requireNonNull(values, "values");
         Objects.requireNonNull(mode, "mode");
         Objects.requireNonNull(context, "context");
-        if (canonicalKeys.size() != values.size()) {
+        if (keyCount != values.size()) {
             throw new IllegalArgumentException(
-                    "Canonical key count " + canonicalKeys.size() + " does not match value count "
+                    "Canonical key count " + keyCount + " does not match value count "
                             + values.size() + '.');
         }
+    }
 
-        Map<String, Integer> indexes = indexCanonicalKeys(canonicalKeys);
+    private static List<DatevValidationError> validateIndexed(
+            List<String> canonicalKeys,
+            Map<String, Integer> indexes,
+            List<String> values,
+            DatevValidationMode mode,
+            DatevValidationContext context,
+            boolean officialSchema
+    ) {
         if (mode == DatevValidationMode.NONE) {
             return List.of();
         }
@@ -132,7 +186,7 @@ public final class DatevRowValidation {
         var errors = new ArrayList<DatevValidationError>();
         for (int index = 0; index < canonicalKeys.size(); index++) {
             String canonicalKey = canonicalKeys.get(index);
-            DatevFieldSpec spec = DatevFieldSpecs.find(canonicalKey).orElse(null);
+            DatevFieldSpec spec = DatevFieldSpecs.findOrNull(canonicalKey);
             if (spec == null) {
                 continue;
             }
@@ -162,12 +216,17 @@ public final class DatevRowValidation {
             DatevValidationContext context,
             List<DatevValidationError> errors
     ) {
-        if (containsControlCharacter(value)) {
+        // One pass replaces the former control-character scan plus a per-field CharsetEncoder
+        // allocation. The reported precedence stays control character first, unmappable second.
+        // This uses the package-private inspection rather than DatevCsv.requireExportable because
+        // it must report two distinct errors instead of throwing on the first violation.
+        DatevCsv.OutputSafety outputSafety = DatevCsv.inspectOutputSafety(value);
+        if (outputSafety == DatevCsv.OutputSafety.CONTROL_CHARACTER) {
             errors.add(formatError(spec,
                     "must not contain control or line-separator characters"));
             return;
         }
-        if (!WINDOWS_1252.newEncoder().canEncode(value)) {
+        if (outputSafety == DatevCsv.OutputSafety.UNMAPPABLE_CHARACTER) {
             errors.add(error(spec, DatevValidationError.Code.UNMAPPABLE_CHARACTER,
                     "DATEV field #" + spec.fieldNumber() + " '" + spec.canonicalKey()
                             + "' contains a character that Windows-1252 cannot encode."));
@@ -223,7 +282,7 @@ public final class DatevRowValidation {
         } else if ("Abw. Versteuerungsart".equals(key)) {
             requireOneOf(spec, value, errors, "I", "K", "P", "S");
         } else if ("Veranlagungsjahr".equals(key)) {
-            if (!value.matches("20[0-9]{2}")) {
+            if (!isAsciiDigits(value, 4) || value.charAt(0) != '2' || value.charAt(1) != '0') {
                 errors.add(formatError(spec,
                         "must use a four-digit year from 2000 through 2099"));
             }
@@ -426,7 +485,7 @@ public final class DatevRowValidation {
             String value,
             List<DatevValidationError> errors
     ) {
-        if (!value.matches("[A-Z]{3}")) {
+        if (!UPPERCASE_THREE.matcher(value).matches()) {
             errors.add(formatError(spec,
                     "must contain an uppercase three-letter ISO 4217 code"));
             return;
@@ -455,7 +514,7 @@ public final class DatevRowValidation {
             DatevValidationContext context,
             List<DatevValidationError> errors
     ) {
-        if (!value.matches("[0-9]{4}")) {
+        if (!isAsciiDigits(value, 4)) {
             errors.add(formatError(spec, "must use DATEV's DDMM representation"));
             return;
         }
@@ -482,7 +541,7 @@ public final class DatevRowValidation {
             String value,
             List<DatevValidationError> errors
     ) {
-        if (!value.matches("[0-9]{8}")) {
+        if (!isAsciiDigits(value, 8)) {
             errors.add(formatError(spec, "must use DATEV's DDMMYYYY representation"));
             return;
         }
@@ -591,7 +650,27 @@ public final class DatevRowValidation {
         return index != null && !isEmpty(values.get(index));
     }
 
+    /**
+     * Indexes a caller-owned key list, rejecting null and duplicated keys.
+     *
+     * <p>Runs on every call: the list may be mutable, so a caller that edits it between calls must
+     * still get correct results. Callers holding an immutable, already indexed header avoid this
+     * cost through the package-private overload above.
+     *
+     * <p>The two official schemas are the exception. Each hands out one immutable header list for
+     * the lifetime of the JVM and indexed it once when its enum constant was created, so a caller
+     * passing {@code schema.headers()} is recognized by reference and reuses that map. Skipping the
+     * null and duplicate rejection is safe for exactly those two lists, because
+     * {@link DatevSchema} rejected both when it built the map. Any other list, including a mutable
+     * copy of an official one, is re-indexed.
+     */
     private static Map<String, Integer> indexCanonicalKeys(List<String> canonicalKeys) {
+        if (canonicalKeys == DatevSchema.CURRENT_V13.headers()) {
+            return DatevSchema.CURRENT_V13.headerIndexes();
+        }
+        if (canonicalKeys == DatevSchema.LEGACY_V12.headers()) {
+            return DatevSchema.LEGACY_V12.headerIndexes();
+        }
         var result = new HashMap<String, Integer>(canonicalKeys.size());
         for (int index = 0; index < canonicalKeys.size(); index++) {
             String key = Objects.requireNonNull(canonicalKeys.get(index),
@@ -659,10 +738,25 @@ public final class DatevRowValidation {
         return value == null || value.isEmpty();
     }
 
-    private static boolean containsControlCharacter(String value) {
-        return value.codePoints().anyMatch(codePoint -> Character.isISOControl(codePoint)
-                || Character.getType(codePoint) == Character.LINE_SEPARATOR
-                || Character.getType(codePoint) == Character.PARAGRAPH_SEPARATOR);
+    /**
+     * Returns whether a value is exactly {@code length} ASCII digits.
+     *
+     * <p>Replaces {@code String.matches("[0-9]{n}")} on the row hot path, which compiled a fresh
+     * {@link Pattern} for every cell. The accepted range is ASCII {@code 0}-{@code 9} only,
+     * exactly like {@code [0-9]} without {@code UNICODE_CHARACTER_CLASS}, so digits such as
+     * Arabic-Indic ones stay rejected.
+     */
+    private static boolean isAsciiDigits(String value, int length) {
+        if (value.length() != length) {
+            return false;
+        }
+        for (int index = 0; index < length; index++) {
+            char character = value.charAt(index);
+            if (character < '0' || character > '9') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static Set<String> isoCountries() {

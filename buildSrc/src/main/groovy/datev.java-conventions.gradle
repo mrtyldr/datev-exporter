@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'io.github.mrtyldr'
-version = providers.gradleProperty('releaseVersion').getOrElse('0.1.1-SNAPSHOT')
+version = providers.gradleProperty('releaseVersion').getOrElse('0.2.0-SNAPSHOT')
 
 repositories {
     mavenCentral()

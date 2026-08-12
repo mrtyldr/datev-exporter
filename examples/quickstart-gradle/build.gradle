@@ -1,0 +1,39 @@
+plugins {
+    id 'application'
+}
+
+dependencies {
+    implementation project(':datev-exporter-plain')
+    implementation project(':datev-exporter-field-validator')
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'io.github.mrtyldr.datev.examples.quickstart.CreateDatevExport'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.named('run', JavaExec) {
+    workingDir projectDir
+}
+
+def verifyQuickstart = tasks.register('verifyQuickstart', JavaExec) {
+    group = 'verification'
+    description = 'Runs the deterministic quickstart and verifies its complete EXTF output.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set(application.mainClass)
+    workingDir projectDir
+}
+
+tasks.named('check') {
+    dependsOn verifyQuickstart
+}

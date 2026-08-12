@@ -89,8 +89,10 @@ public final class DatevRowValidator {
             DatevMetadata metadata
     ) {
         Objects.requireNonNull(header, "header");
+        // The header validated and indexed its keys once, when it was constructed.
         return DatevRowValidation.validate(
                 header.keys(),
+                header.keyIndexes(),
                 values,
                 mode,
                 contextFor(metadata),

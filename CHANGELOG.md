@@ -10,6 +10,47 @@ Until the first `1.0.0` release the public API may change between minor versions
 
 Nothing yet.
 
+## [0.2.0] - 2026-08-12
+
+### Added
+
+- A Gradle quickstart application that generates a deterministic complete v13 EXTF file during
+  `check` and verifies the management record, official heading and booking row through a pinned
+  whole-file SHA-256 value.
+- A permanent `datev-exporter-benchmarks` JMH module comparing complete, strictly validated EXTF
+  output through the plain retained file, plain forward-only writer and advanced retained file.
+  The module is compiled by the normal build but cannot be published and is absent from the BOM.
+- `DatevCsv.requireExportable(String value, String description)`, which checks in a single pass
+  that a value carries neither a control or line-separator character nor a character Windows-1252
+  cannot encode. It reports the control-character violation first, exactly as the exporters always
+  did, and throws the same `IllegalArgumentException` messages they used to build themselves. The
+  plain exporter now goes through it instead of scanning each cell twice.
+
+### Changed
+
+Except for the `applicationInformation` validation alignment described below, these changes preserve
+the accepted rows, reported validation errors and emitted bytes. The validation, schema-lookup and
+CSV-codec optimization items reduce allocations or CPU work; byte-for-byte parity tests against the
+buffered exporter guard the output contract.
+
+- `DatevStreamWriter`'s existing write-through contract is now explicit: each record is prepared in
+  call-local `String`/`byte[]` storage, handed to the destination immediately and then discarded.
+  The library does not batch records; callers decide whether to wrap the destination in
+  `BufferedOutputStream` or `BufferedWriter` and choose any buffer size.
+- `DatevMetadata.Builder.applicationInformation(...)` now rejects characters that Windows-1252
+  cannot encode when the value is set. This makes the streaming and buffered paths fail consistently
+  before output instead of allowing the streaming path to replace such characters.
+- Row validation reuses the canonical-key index map that `DatevSchema` and `DatevHeader` build once
+  instead of re-indexing 125 keys per row. A key list that is not one of the two official heading
+  lists is still re-indexed on every call, so null and duplicate keys stay rejected.
+- `DatevSchema.headers()` returns the same list instance `DatevFieldSpecs.headers13()` and
+  `headers12()` return, rather than a separately derived copy with identical contents.
+- The Windows-1252 encodability table in `DatevCsv` is derived by decoding 256 bytes instead of
+  probing 65 536 code points against a `CharsetEncoder`, which shortens class initialization. The
+  full Basic Multilingual Plane parity test against the JDK encoder still guards the result.
+- Per-cell `CharsetEncoder`, per-cell `Optional` and per-row `Pattern` compilations were removed
+  from the validation and assembly paths.
+
 ## [0.1.1] - 2026-08-11
 
 ### Added
@@ -46,13 +87,15 @@ describes what ships rather than what changed.
 - `datev-exporter-advanced-univocity` — `DatevUnivocityWriters`, for applications whose existing
   Univocity `CsvWriter` pipeline has to emit the file.
 
-No exporter has a third-party runtime dependency; only the Univocity interoperability module does.
+The built-in exporters have no third-party runtime dependency; only the optional Univocity
+interoperability module adds one.
 
 ### Highlights
 
-- Both exporters can produce a complete, importable Buchungsstapel file. Attach a `DatevMetadata`
-  through `DatevFile.builder()` or `DatevStreamWriter.builder()`; the builders reject metadata whose
-  format version differs from the selected schema.
+- Both built-in exporters can produce a format-complete Buchungsstapel import candidate. Attach a
+  `DatevMetadata` through `DatevFile.builder()` or `DatevStreamWriter.builder()`; the builders reject
+  metadata whose format version differs from the selected schema. Acceptance still depends on the
+  licensed, configured target DATEV environment.
 - `DatevField` gives every one of the 125 official columns a readable English constant carrying the
   exact German heading, checked against the canonical table on class initialization. Every
   `DatevColumn` factory accepts either a `DatevField` or the raw heading `String`.
@@ -60,8 +103,9 @@ No exporter has a third-party runtime dependency; only the Univocity interoperab
   groups from labelled entries, assigning slots in insertion order and enforcing the official field
   lengths at the call site, so DATEV's inconsistent `Art`/`Inhalt` heading spelling never has to be
   typed by hand.
-- Every module serializes and parses through one `DatevCsv` implementation, so the exporters cannot
-  drift apart in their reading of a DATEV record.
+- Every built-in exporter serializes and parses through one `DatevCsv` implementation, so those
+  exporters cannot drift apart in their reading of a DATEV record. The optional Univocity adapter
+  retains its documented heading-quoting difference.
 - `DatevMetadata`, `DatevValidationContext`, `DatevValidator` and `DatevHeader` are value types with
   `equals`, `hashCode` and `toString`.
 - Published jars carry an `Automatic-Module-Name` and are built reproducibly: normalized timestamps

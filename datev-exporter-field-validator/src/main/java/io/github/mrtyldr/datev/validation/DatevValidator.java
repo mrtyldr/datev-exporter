@@ -128,6 +128,8 @@ public final class DatevValidator implements BiConsumer<Integer, List<String>> {
             throw new IllegalArgumentException("DATEV " + schema.name() + " expects "
                     + schema.columnCount() + " values but received " + values.size() + '.');
         }
+        // schema.headers() hands out the same immutable list every time, which the validation
+        // engine recognizes by reference and answers with the index map the schema built once.
         return DatevRowValidation.validate(schema.headers(), values, mode, context, true);
     }
 

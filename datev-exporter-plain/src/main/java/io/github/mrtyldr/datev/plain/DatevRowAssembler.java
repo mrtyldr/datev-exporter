@@ -4,8 +4,6 @@ import io.github.mrtyldr.datev.core.DatevColumn;
 import io.github.mrtyldr.datev.core.DatevCsv;
 import io.github.mrtyldr.datev.core.DatevSchema;
 
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,9 +19,6 @@ final class DatevRowAssembler {
 
     private final DatevSchema schema;
     private final BiConsumer<Integer, List<String>> validator;
-    private final CharsetEncoder cellEncoder = DatevFile.DEFAULT_CHARSET.newEncoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT);
     private final Map<String, Integer> headerIndexes;
 
     DatevRowAssembler(
@@ -161,13 +156,10 @@ final class DatevRowAssembler {
 
     private String validateCell(String value, String headerIdentifier) {
         if (value != null) {
-            DatevCsv.rejectControlCharacters(value, "value for DATEV header '" + headerIdentifier + "'");
-            if (!cellEncoder.canEncode(value)) {
-                throw new IllegalArgumentException(
-                        "Value for DATEV header '" + headerIdentifier
-                                + "' cannot be encoded as Windows-1252."
-                );
-            }
+            // One pass replaces the former control-character scan followed by an independent
+            // canEncode scan. Messages and their precedence are unchanged.
+            DatevCsv.requireExportable(value,
+                    "value for DATEV header '" + headerIdentifier + "'");
         }
         return value;
     }

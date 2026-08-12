@@ -1,0 +1,55 @@
+// Internal only. This module is included in the build so benchmark sources cannot rot, but it is
+// deliberately absent from the BOM and Maven Central release.
+plugins {
+    id 'datev.java-conventions'
+    id 'me.champeau.jmh' version '0.7.3'
+}
+
+description = 'Internal JMH benchmarks for DATEV exporter write paths.'
+
+dependencies {
+    jmh project(':datev-exporter-plain')
+    jmh project(':datev-exporter-field-validator')
+    jmh project(':datev-exporter-advanced')
+}
+
+jmh {
+    jmhVersion = '1.37'
+    failOnError = true
+}
+
+// A normal build compiles both the benchmark sources and JMH's generated harness, but does not run
+// timing-sensitive measurements on shared CI hardware.
+tasks.named('check') {
+    dependsOn tasks.named('jmhCompileGeneratedClasses')
+}
+
+// All project jars contain the repository license. Suppress only that known resource collision in
+// the executable JMH fat jar; duplicate classes still retain the plugin's default FAIL behavior.
+tasks.named('jmhJar', Jar) {
+    filesMatching('META-INF/LICENSE') {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+}
+
+def jmhJarTask = tasks.named('jmhJar', Jar)
+tasks.register('jmhSmoke', JavaExec) {
+    group = 'verification'
+    description = 'Runs every benchmark and parameter with a single short measurement.'
+    dependsOn jmhJarTask
+    classpath = files(jmhJarTask.flatMap { it.archiveFile })
+    mainClass = 'org.openjdk.jmh.Main'
+    args '-wi', '0', '-i', '1', '-f', '1', '-r', '100ms'
+}
+
+def nonPublishableMessage =
+        "${project.path} is an internal benchmark module and must never be published."
+plugins.withId('datev.publish-conventions') {
+    throw new GradleException(nonPublishableMessage)
+}
+plugins.withId('maven-publish') {
+    throw new GradleException(nonPublishableMessage)
+}
+plugins.withId('com.vanniktech.maven.publish') {
+    throw new GradleException(nonPublishableMessage)
+}

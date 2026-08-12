@@ -3,7 +3,7 @@ plugins {
     id 'datev.publish-conventions'
 }
 
-description = 'A Java library with no third-party dependencies for writing fixed DATEV column headings and booking rows.'
+description = 'A Java 17 writer for complete DATEV Buchungsstapel and EXTF v13/v12 files with retained and forward-only streaming APIs.'
 ext.datevModuleName = 'io.github.mrtyldr.datev.plain'
 
 dependencies {

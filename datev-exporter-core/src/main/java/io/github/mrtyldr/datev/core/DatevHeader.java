@@ -360,6 +360,20 @@ public final class DatevHeader {
         return bookingBatchFormatVersion;
     }
 
+    /**
+     * Returns the immutable canonical-key-to-column-index map of this header.
+     *
+     * <p>Built and validated for null and duplicate keys in the constructor, so row validation can
+     * reuse it instead of re-indexing every key for every row. Deliberately not part of the public
+     * surface: it exists only so the validation engine in this package can skip work this
+     * immutable header already did.
+     *
+     * @return the immutable key index map
+     */
+    Map<String, Integer> keyIndexes() {
+        return keyIndexes;
+    }
+
     @Override
     public boolean equals(Object other) {
         return this == other || other instanceof DatevHeader that

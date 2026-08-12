@@ -330,6 +330,11 @@ public final class DatevFieldSpecs {
         if (canonicalKeys == null) {
             return false;
         }
+        // The official lists themselves are by far the most common argument, and comparing them
+        // by identity avoids building a 125-element HashSet copy for every row.
+        if (canonicalKeys == HEADERS || canonicalKeys == HEADERS_12) {
+            return true;
+        }
         int size = canonicalKeys.size();
         if (size != 124 && size != 125) {
             return false;
@@ -363,7 +368,20 @@ public final class DatevFieldSpecs {
      * @return matching definition, if any
      */
     public static Optional<DatevFieldSpec> find(String canonicalKey) {
-        return Optional.ofNullable(canonicalKey == null ? null : BY_KEY.get(canonicalKey));
+        return Optional.ofNullable(findOrNull(canonicalKey));
+    }
+
+    /**
+     * Finds a definition by official column name without wrapping the result.
+     *
+     * <p>The row validation hot path performs this lookup once per cell, which is 125 times per
+     * row. Returning the definition directly avoids an {@link Optional} allocation per cell.
+     *
+     * @param canonicalKey official column name, may be {@code null}
+     * @return the matching definition, or {@code null} if there is none
+     */
+    static DatevFieldSpec findOrNull(String canonicalKey) {
+        return canonicalKey == null ? null : BY_KEY.get(canonicalKey);
     }
 
     private static DatevFieldSpec spec(
